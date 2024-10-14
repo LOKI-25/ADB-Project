@@ -15,7 +15,8 @@ const loginDoctor = async (req, res) => {
             return res.json({ success: false, message: "Invalid credentials" })
         }
 
-        const isMatch = await bcrypt.compare(password, user.password)
+        // const isMatch = await bcrypt.compare(password, user.password)
+        const isMatch = password === user.password
 
         if (isMatch) {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)

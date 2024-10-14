@@ -1,13 +1,27 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { assets } from '../assets/assets'
 import { NavLink } from 'react-router-dom'
 import { DoctorContext } from '../context/DoctorContext'
 import { AdminContext } from '../context/AdminContext'
+import {jwtDecode} from 'jwt-decode'
 
 const Sidebar = () => {
 
   const { dToken } = useContext(DoctorContext)
   const { aToken } = useContext(AdminContext)
+  const [role, setRole] = useState('')
+
+  useEffect(() => {
+    if (aToken) {
+      try {
+        const token_decode = jwtDecode(aToken)
+        setRole(token_decode.role)
+      } catch (err) {
+        console.error("Token verification error:", err)
+      }
+    }
+  }, [aToken])
+  
 
   return (
     <div className='min-h-screen bg-white border-r'>
@@ -25,6 +39,12 @@ const Sidebar = () => {
           <img className='min-w-5' src={assets.add_icon} alt='' />
           <p className='hidden md:block'>Add Doctor</p>
         </NavLink>
+        {role === 'admin' &&
+        <NavLink to={'/add-operator'} className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
+          <img className='min-w-5' src={assets.add_icon} alt='' />
+          <p className='hidden md:block'>Add Operator</p>
+        </NavLink>
+        }
         <NavLink to={'/doctor-list'} className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
           <img className='min-w-5' src={assets.people_icon} alt='' />
           <p className='hidden md:block'>Doctors List</p>

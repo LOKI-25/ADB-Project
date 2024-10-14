@@ -1,0 +1,5 @@
+# ignore all node_modules in admin,backend,frontend folders
+admin/node_modules
+backend/node_modules
+frontend/node_modules
+/node_modules

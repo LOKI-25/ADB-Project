@@ -18,6 +18,7 @@ import UpdateDoctorProfile from './pages/Doctor/UpdateDoctorProfile';
 import UsersList from './pages/Admin/UsersList';
 import OperatorsList from './pages/Admin/OperatorsList';
 import UpdateUser from './pages/Admin/UpdateUser';
+import AddOperator from './pages/Admin/AddOperator';
 
 const App = () => {
 
@@ -35,6 +36,7 @@ const App = () => {
           <Route path='/admin-dashboard' element={<Dashboard />} />
           <Route path='/all-appointments' element={<AllAppointments />} />
           <Route path='/add-doctor' element={<AddDoctor />} />
+          <Route path='/add-operator' element={<AddOperator />} />
           <Route path='/doctor-list' element={<DoctorsList />} />
           <Route path='/users-list' element={<UsersList />} />
           <Route path='/operators-list' element={<OperatorsList />} />

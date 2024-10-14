@@ -4,6 +4,8 @@ import { toast } from 'react-toastify'
 import axios from 'axios'
 import { AdminContext } from '../../context/AdminContext'
 import { AppContext } from '../../context/AppContext'
+import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 
 const AddDoctor = () => {
 
@@ -11,6 +13,7 @@ const AddDoctor = () => {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
     const [experience, setExperience] = useState('1 Year')
     const [fees, setFees] = useState('')
     const [about, setAbout] = useState('')
@@ -22,6 +25,11 @@ const AddDoctor = () => {
     const { backendUrl } = useContext(AppContext)
     const { aToken } = useContext(AdminContext)
 
+    const navigate=useNavigate()
+
+    
+
+
     const onSubmitHandler = async (event) => {
         event.preventDefault()
 
@@ -29,6 +37,9 @@ const AddDoctor = () => {
 
             if (!docImg) {
                 return toast.error('Image Not Selected')
+            }
+            if (password !== confirmPassword) {
+                return toast.error('Passwords do not match')
             }
 
             const formData = new FormData();
@@ -52,15 +63,7 @@ const AddDoctor = () => {
             const { data } = await axios.post(backendUrl + '/api/admin/add-doctor', formData, { headers: { aToken } })
             if (data.success) {
                 toast.success(data.message)
-                setDocImg(false)
-                setName('')
-                setPassword('')
-                setEmail('')
-                setAddress1('')
-                setAddress2('')
-                setDegree('')
-                setAbout('')
-                setFees('')
+                navigate('/doctor-list')
             } else {
                 toast.error(data.message)
             }
@@ -88,7 +91,7 @@ const AddDoctor = () => {
 
                 <div className='flex flex-col lg:flex-row items-start gap-10 text-gray-600'>
 
-                    <div className='w-full lg:flex-1 flex flex-col gap-4'>
+                    <div className='w-full lg:flex-1 flex flex-col gap-4' autoComplete="off">
 
                         <div className='flex-1 flex flex-col gap-1'>
                             <p>Your name</p>
@@ -97,13 +100,17 @@ const AddDoctor = () => {
 
                         <div className='flex-1 flex flex-col gap-1'>
                             <p>Doctor Email</p>
-                            <input onChange={e => setEmail(e.target.value)} value={email} className='border rounded px-3 py-2' type="email" placeholder='Email' required />
+                            <input onChange={e => setEmail(e.target.value)}   value={email} className='border rounded px-3 py-2' type="email" placeholder='Email' required />
                         </div>
 
 
                         <div className='flex-1 flex flex-col gap-1'>
                             <p>Set Password</p>
                             <input onChange={e => setPassword(e.target.value)} value={password} className='border rounded px-3 py-2' type="password" placeholder='Password' required />
+                        </div>
+                        <div className='flex-1 flex flex-col gap-1'>
+                            <p>Confirm Password</p>
+                            <input onChange={e => setConfirmPassword(e.target.value) }  autoComplete="new-password" value={confirmPassword} className='border rounded px-3 py-2' type="password" placeholder='Confirm Password' required />
                         </div>
 
                         <div className='flex-1 flex flex-col gap-1'>

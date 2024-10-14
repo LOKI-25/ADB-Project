@@ -208,7 +208,8 @@ const cancelAppointment = async (req, res) => {
 
         let slots_booked = doctorData.slots_booked
 
-        slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime)
+        delete slots_booked[slotDate]
+
 
         await doctorModel.findByIdAndUpdate(docId, { slots_booked })
 

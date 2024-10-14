@@ -38,6 +38,7 @@ const Doctors = () => {
           <p onClick={() => speciality === 'Gastroenterologist' ? navigate('/doctors') : navigate('/doctors/Gastroenterologist')} className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'Gastroenterologist' ? 'bg-[#E2E5FF] text-black ' : ''}`}>Gastroenterologist</p>
         </div>
         <div className='w-full grid grid-cols-auto gap-4 gap-y-6'>
+        {filterDoc.length === 0 && <p className='text-gray-500 text-center'>No doctors found</p>}
           {filterDoc.map((item, index) => (
             <div onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0) }} className='border border-[#C9D8FF] rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500' key={index}>
               <img className='bg-[#EAEFFF]' src={item.image} alt="" />

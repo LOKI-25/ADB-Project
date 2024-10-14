@@ -58,13 +58,15 @@ const Appointment = () => {
                 let formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 let day = currentDate.getDate()
-                let month = currentDate.getMonth() + 1
+                let month = currentDate.getMonth()
                 let year = currentDate.getFullYear()
 
                 const slotDate = day + "_" + month + "_" + year
                 const slotTime = formattedTime
 
-                const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false : true
+                // const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false : true
+                const isSlotAvailable = docInfo.slots_booked[slotDate]  ? false : true
+
 
                 if (isSlotAvailable) {
 
@@ -78,8 +80,7 @@ const Appointment = () => {
                 // Increment current time by 30 minutes
                 currentDate.setMinutes(currentDate.getMinutes() + 30);
             }
-
-            setDocSlots(prev => ([...prev, timeSlots]))
+            if (timeSlots.length > 0) setDocSlots(prev => ([...prev, timeSlots]))
 
         }
 
@@ -92,10 +93,15 @@ const Appointment = () => {
             return navigate('/login')
         }
 
+        if (!slotTime) {
+            toast.warning('Select a slot to book appointment')
+            return
+        }
+
         const date = docSlots[slotIndex][0].datetime
 
         let day = date.getDate()
-        let month = date.getMonth() + 1
+        let month = date.getMonth() 
         let year = date.getFullYear()
 
         const slotDate = day + "_" + month + "_" + year
@@ -117,6 +123,7 @@ const Appointment = () => {
         }
 
     }
+    
 
     useEffect(() => {
         if (doctors.length > 0) {
@@ -128,7 +135,9 @@ const Appointment = () => {
         if (docInfo) {
             getAvailableSolts()
         }
-    }, [docInfo])
+    }, [docInfo,docId])
+
+    
 
     return docInfo ? (
         <div>
@@ -162,12 +171,16 @@ const Appointment = () => {
             {/* Booking slots */}
             <div className='sm:ml-72 sm:pl-4 mt-8 font-medium text-[#565656]'>
                 <p >Booking slots</p>
+                
+                    {docSlots.length >0 && <>
                 <div className='flex gap-3 items-center w-full overflow-x-scroll mt-4'>
                     {docSlots.length && docSlots.map((item, index) => (
+                        <>
+                        { item[0] &&
                         <div onClick={() => setSlotIndex(index)} key={index} className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex === index ? 'bg-primary text-white' : 'border border-[#DDDDDD]'}`}>
                             <p>{item[0] && daysOfWeek[item[0].datetime.getDay()]}</p>
                             <p>{item[0] && item[0].datetime.getDate()}</p>
-                        </div>
+                        </div>}</>
                     ))}
                 </div>
 
@@ -178,6 +191,11 @@ const Appointment = () => {
                 </div>
 
                 <button onClick={bookAppointment} className='bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6'>Book an appointment</button>
+                </>}
+                
+                {docSlots.length <1 &&<button className='bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6'>All appointments are booked</button>}
+
+
             </div>
 
             {/* Listing Releated Doctors */}
