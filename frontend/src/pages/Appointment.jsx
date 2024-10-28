@@ -11,6 +11,7 @@ const Appointment = () => {
     const { docId } = useParams()
     const { doctors, currencySymbol, backendUrl, token, getDoctosData } = useContext(AppContext)
     const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    const {userData} = useContext(AppContext)
 
     const [docInfo, setDocInfo] = useState(false)
     const [docSlots, setDocSlots] = useState([])
@@ -61,11 +62,11 @@ const Appointment = () => {
                 let month = currentDate.getMonth()
                 let year = currentDate.getFullYear()
 
-                const slotDate = day + "_" + month + "_" + year
+                const slotDate = day + "_" + month + "_" + year 
                 const slotTime = formattedTime
 
-                // const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false : true
-                const isSlotAvailable = docInfo.slots_booked[slotDate]  ? false : true
+                const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false : true
+                // const isSlotAvailable = docInfo.slots_booked[slotDate]  ? false : true
 
 
                 if (isSlotAvailable) {
@@ -104,7 +105,7 @@ const Appointment = () => {
         let month = date.getMonth() 
         let year = date.getFullYear()
 
-        const slotDate = day + "_" + month + "_" + year
+        const slotDate = day + "_" + month + "_" + year 
 
         try {
 

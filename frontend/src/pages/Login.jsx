@@ -25,6 +25,8 @@ const Login = () => {
       if (data.success) {
         localStorage.setItem('token', data.token)
         setToken(data.token)
+        navigate('/my-profile')
+
       } else {
         toast.error(data.message)
       }
@@ -44,6 +46,14 @@ const Login = () => {
 
   }
 
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            navigate('/login'); // Redirect to login if token doesn't exist
+        }
+    }, [navigate]);
   useEffect(() => {
     if (token) {
       navigate('/')

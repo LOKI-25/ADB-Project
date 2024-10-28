@@ -38,12 +38,12 @@ const registerUser = async (req, res) => {
 
         // hashing user password
         const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
-        const hashedPassword = await bcrypt.hash(password, salt)
+        // const hashedPassword = await bcrypt.hash(password, salt)
 
         const userData = {
             name,
             email,
-            password: hashedPassword,
+            password: password,
         }
 
         const newUser = new userModel(userData)
@@ -107,11 +107,21 @@ const updateProfile = async (req, res) => {
         const { userId, name, phone, address, dob, gender } = req.body
         const imageFile = req.file
 
+
         if (!name || !phone || !dob || !gender) {
             return res.json({ success: false, message: "Data Missing" })
         }
 
         await userModel.findByIdAndUpdate(userId, { name, phone, address: JSON.parse(address), dob, gender })
+        if (imageFile) {
+            // Check file extension
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+            const fileExtension = imageFile.originalname.split('.').pop().toLowerCase();
+
+            if (!allowedExtensions.includes(`.${fileExtension}`)) {
+                return res.json({ success: false, message: "Invalid file type. Only jpg, jpeg, png, and gif are allowed." });
+            }
+        }
 
         if (imageFile) {
 
@@ -142,6 +152,12 @@ const bookAppointment = async (req, res) => {
             return res.json({ success: false, message: 'Doctor Not Available' })
         }
 
+        // check appoint alredy made for same day 
+        const appointmentExist = await appointmentModel.findOne({ userId, docId, slotDate, cancelled: false })
+        if (appointmentExist) {
+            return res.json({ success: false, message: 'Appointment already made for same day' })
+        }
+
         let slots_booked = docData.slots_booked
 
         // checking for slot availablity 
@@ -158,6 +174,7 @@ const bookAppointment = async (req, res) => {
         }
 
         const userData = await userModel.findById(userId).select("-password")
+        console.log(userData)
 
         delete docData.slots_booked
 

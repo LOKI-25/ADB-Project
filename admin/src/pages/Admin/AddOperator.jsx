@@ -8,12 +8,12 @@ import { useNavigate } from 'react-router-dom'
 
 const AddOperator = () => {
 
-    const [name, setName] = useState('')
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
-    const [address1, setAddress1] = useState('')
-    const [address2, setAddress2] = useState('')
+    const [name, setName] = useState('Operator')
+    const [email, setEmail] = useState('op1@gmail.com')
+    const [password, setPassword] = useState('operator123')
+    const [confirmPassword, setConfirmPassword] = useState('operator123')
+    const [address1, setAddress1] = useState('123 street')
+    const [address2, setAddress2] = useState('Usa')
     const navigate = useNavigate();
 
     const { backendUrl } = useContext(AppContext)

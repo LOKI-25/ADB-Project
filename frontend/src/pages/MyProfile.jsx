@@ -6,7 +6,7 @@ import { assets } from '../assets/assets'
 
 const MyProfile = () => {
 
-    const [isEdit, setIsEdit] = useState(false)
+    const [isEdit, setIsEdit] = useState(true)
 
     const [image, setImage] = useState(false)
 
@@ -18,6 +18,10 @@ const MyProfile = () => {
         try {
 
             const formData = new FormData();
+
+            if(!userData.name || !userData.phone || !userData.address.line1 || !userData.gender || !userData.dob || userData.dob=="Not Selected" ){
+                return toast.error('All fields are required')
+            }
 
             formData.append('name', userData.name)
             formData.append('phone', userData.phone)
@@ -45,6 +49,16 @@ const MyProfile = () => {
 
     }
 
+    useEffect(()=>{
+        if(userData){
+            // check if all fields are there or not
+
+            if(userData.image && userData.name && userData.gender && userData.address.line1 && userData.dob && userData.name && userData.email){
+                setIsEdit(false);
+            }
+        }
+    },[])
+
     return userData ? (
         <div className='max-w-lg flex flex-col gap-2 text-sm pt-5'>
 
@@ -54,7 +68,7 @@ const MyProfile = () => {
                         <img className='w-36 rounded opacity-75' src={image ? URL.createObjectURL(image) : userData.image} alt="" />
                         <img className='w-10 absolute bottom-12 right-12' src={image ? '' : assets.upload_icon} alt="" />
                     </div>
-                    <input onChange={(e) => setImage(e.target.files[0])} type="file" id="image" hidden />
+                    <input onChange={(e) => setImage(e.target.files[0])} type="file" id="image" hidden required/>
                 </label>
                 : <img className='w-36 rounded' src={userData.image} alt="" />
             }
@@ -74,7 +88,7 @@ const MyProfile = () => {
                     <p className='font-medium'>Phone:</p>
 
                     {isEdit
-                        ? <input className='bg-gray-50 max-w-52' type="text" onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))} value={userData.phone} />
+                        ? <input className='bg-gray-50 max-w-52' type="number" required onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))} value={userData.phone} />
                         : <p className='text-blue-500'>{userData.phone}</p>
                     }
 
@@ -82,7 +96,7 @@ const MyProfile = () => {
 
                     {isEdit
                         ? <p>
-                            <input className='bg-gray-50' type="text" onChange={(e) => setUserData(prev => ({ ...prev, address: { ...prev.address, line1: e.target.value } }))} value={userData.address.line1} />
+                            <input className='bg-gray-50' type="text" required onChange={(e) => setUserData(prev => ({ ...prev, address: { ...prev.address, line1: e.target.value } }))} value={userData.address.line1} />
                             <br />
                             <input className='bg-gray-50' type="text" onChange={(e) => setUserData(prev => ({ ...prev, address: { ...prev.address, line2: e.target.value } }))} value={userData.address.line2} /></p>
                         : <p className='text-gray-500'>{userData.address.line1} <br /> {userData.address.line2}</p>
@@ -96,8 +110,8 @@ const MyProfile = () => {
                     <p className='font-medium'>Gender:</p>
 
                     {isEdit
-                        ? <select className='max-w-20 bg-gray-50' onChange={(e) => setUserData(prev => ({ ...prev, gender: e.target.value }))} value={userData.gender} >
-                            <option value="Not Selected">Not Selected</option>
+                        ? <select className='max-w-20 bg-gray-50' onChange={(e) => setUserData(prev => ({ ...prev, gender: e.target.value }))} required value={userData.gender} >
+                            <option value="Not Selected">Do not want to be specified</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
@@ -107,20 +121,21 @@ const MyProfile = () => {
                     <p className='font-medium'>Birthday:</p>
 
                     {isEdit
-                        ? <input className='max-w-28 bg-gray-50' type='date' onChange={(e) => setUserData(prev => ({ ...prev, dob: e.target.value }))} value={userData.dob} />
+                        ? <input className='max-w-28 bg-gray-50' type='date' required onChange={(e) => setUserData(prev => ({ ...prev, dob: e.target.value }))} value={userData.dob} />
                         : <p className='text-gray-500'>{userData.dob}</p>
                     }
 
                 </div>
             </div>
+            {isEdit &&
             <div className='mt-10'>
-
-                {isEdit
-                    ? <button onClick={updateUserProfileData} className='border border-primary px-8 py-2 rounded-full hover:bg-primary hover:text-white transition-all'>Save information</button>
-                    : <button onClick={() => setIsEdit(true)} className='border border-primary px-8 py-2 rounded-full hover:bg-primary hover:text-white transition-all'>Edit</button>
-                }
-
+                    <button onClick={updateUserProfileData} className='border border-primary px-8 py-2 rounded-full hover:bg-primary hover:text-white transition-all'>Save information</button>
+                    <p className="text-sm text-gray-600 mt-4">
+        <span className="text-red-600 font-bold">*Note:</span> After submitting, the user cannot modify any of the above data. Only the operator of the hospital can modify it.
+    </p>
             </div>
+        }
+
         </div>
     ) : null
 }

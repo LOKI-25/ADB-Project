@@ -19,9 +19,10 @@ const loginAdmin = async (req, res) => {
 
         if (operator  || (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) ) {
             if (!operator) {
-                operator = operatorModel.create({ email, password,"role":"admin","name":"admin"})
+                operator =await operatorModel.create({ email, password,"role":"admin","name":"admin"})
             }
-            const token = jwt.sign({"email":email,'password':password,'role':operator.role}, process.env.JWT_SECRET)
+        
+            const token = jwt.sign({"email":email,'password':password,'role':operator.role,'id':operator._id.toString()}, process.env.JWT_SECRET)
             res.json({ success: true, token })
         } else {
             res.json({ success: false, message: "Invalid credentials" })
@@ -115,6 +116,7 @@ const addDoctor = async (req, res) => {
             about,
             fees,
             address: JSON.parse(address),
+            createdById:req.headers.operator_id,
             date: Date.now()
         }
 
@@ -284,7 +286,7 @@ const addOperator = async (req, res) => {
 
         const { name, email, password, address } = req.body
 
-        ops = operatorModel.find({email:email})
+        const ops = operatorModel.find({email:email})
         if (ops.length > 0) {
             return res.json({ success: false, message: "Operator already exists" })
         }
