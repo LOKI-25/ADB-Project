@@ -16,6 +16,7 @@ const doctorSchema = new mongoose.Schema({
     date: { type: Number, required: true },
     role : { type: String, default: 'doctor' },
     createdById : { type: String, required: true },
+    timeSlotId: { type: String, required: true },
 
 }, { minimize: false })
 

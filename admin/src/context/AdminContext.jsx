@@ -16,7 +16,6 @@ const AdminContextProvider = (props) => {
     const [doctors, setDoctors] = useState([])
     const [users, setUsers] = useState([])
     const [operators, setOperators] = useState([])
-
     const [dashData, setDashData] = useState(false)
 
     // Getting all Doctors data from Database using API

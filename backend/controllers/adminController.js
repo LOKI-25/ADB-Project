@@ -6,6 +6,7 @@ import validator from "validator";
 import { v2 as cloudinary } from "cloudinary";
 import userModel from "../models/userModel.js";
 import operatorModel from "../models/operatorModel.js";
+import adminModel from "../models/adminModel.js";
 
 // API for admin login
 const loginAdmin = async (req, res) => {
@@ -284,11 +285,17 @@ const addOperator = async (req, res) => {
 
     try {
 
-        const { name, email, password, address } = req.body
+        const { name, email, password, address,role } = req.body
 
         const ops = operatorModel.find({email:email})
         if (ops.length > 0) {
             return res.json({ success: false, message: "Operator already exists" })
+        }
+        if (role === "admin"){
+            const adm = adminModel.find({email:email})
+            if(adm.length>0){
+            return res.json({ success: false, message: "Admin already exists" })
+            }
         }
        
 
@@ -317,12 +324,23 @@ const addOperator = async (req, res) => {
             email,
             password: password,
             address: JSON.parse(address),
-            role: 'operator',
-            date: Date.now()
+            role: role,
+            date: Date.now(),
+            createdById:req.headers.user_id
         }
+
+
 
         const newop = new operatorModel(operatorData)
         await newop.save()
+        if(role==="admin"){
+            const adminData = {
+                name,email,password
+            }
+            const newadm = new adminModel(adminData)
+            await newadm.save()
+            console.log("ADMIN Created")
+        }
         res.json({ success: true, message: 'Operator Added' })
 
     } catch (error) {

@@ -6,7 +6,8 @@ const operatorSchema = new mongoose.Schema({
     password: { type: String, required: true },
     gender: { type: String, required: false },
     address: { type: Object, required: false },
-    role: { type: String, default: 'operator' }
+    role: { type: String, default: 'operator' },
+    createdById:{type:String,default:'admin',required:false}
 })
 
 const operatorModel = mongoose.models.operator || mongoose.model("operator", operatorSchema);

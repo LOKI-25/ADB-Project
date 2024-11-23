@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import prescriptionModel from "../models/prescriptionModel.js";
+import timeSlotModel from "../models/timeSlotModel.js";
 
 // API for doctor Login 
 const loginDoctor = async (req, res) => {
@@ -191,6 +193,41 @@ const doctorDashboard = async (req, res) => {
     }
 }
 
+const createPrescription = async (appointmentID, medicines) => {
+    try{
+    const newPrescription = new prescriptionModel({ appointmentID:appointmentID, medicines:medicines });
+    await newPrescription.save();
+    res.json({ success: true, message: 'Prescription Created' });
+    }
+    catch (error) {
+        console.log(error)
+    }
+  };
+
+const createTimeSlot = async (req, res) => {
+    try{
+    const newTimeSlot = new timeSlotModel({ availableDays:["mon","tues","wed"], startTime:"10:00AM", endTime:"5:00PM" });
+    await newTimeSlot.save();
+    res.json({ success: true, message: 'Time Slot Created' });
+    }
+
+    catch (error) {
+        console.log(error)
+    }
+}
+
+const updateTimeSlot = async (req, res) => {
+    try{
+    const { timeSlotId } = req.body;
+    await timeSlotModel.findByIdAndUpdate(timeSlotId, req.body);
+    res.json({ success: true, message: 'Time Slot Updated' });
+    }
+    
+        catch (error) {
+            console.log(error)
+        }
+    }
+
 export {
     loginDoctor,
     appointmentsDoctor,
@@ -200,5 +237,8 @@ export {
     appointmentComplete,
     doctorDashboard,
     doctorProfile,
-    updateDoctorProfile
+    updateDoctorProfile,
+    createPrescription,
+    createTimeSlot,
+    updateTimeSlot
 }

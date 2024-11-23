@@ -14,6 +14,7 @@ const AddOperator = () => {
     const [confirmPassword, setConfirmPassword] = useState('operator123')
     const [address1, setAddress1] = useState('123 street')
     const [address2, setAddress2] = useState('Usa')
+    const [isAdmin,setIsAdmin] = useState(false)
     const navigate = useNavigate();
 
     const { backendUrl } = useContext(AppContext)
@@ -27,7 +28,8 @@ const AddOperator = () => {
                 name,
                 email,
                 password,
-                address: JSON.stringify({ line1: address1, line2: address2 })
+                address: JSON.stringify({ line1: address1, line2: address2 }),
+                role: isAdmin?'admin':"operator"
             }
             if (password !== confirmPassword) {
                 return toast.error('Passwords do not match')
@@ -78,6 +80,10 @@ const AddOperator = () => {
                         <div className='flex-1 flex flex-col gap-1'>
                             <p>Confirm Password</p>
                             <input onChange={e => setConfirmPassword(e.target.value)} value={confirmPassword} className='border rounded px-3 py-2' type="password" placeholder='Confirm Password' required />
+                        </div>
+                        <div className='flex-1 flex flex-col gap-1'>
+                            <p>Is admin</p>
+                            <input onChange={e => setIsAdmin(!isAdmin)} value={isAdmin} className='border rounded px-3 py-2' type="checkbox" required />
                         </div>
 
                     </div>
