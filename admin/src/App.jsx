@@ -19,13 +19,14 @@ import UsersList from './pages/Admin/UsersList';
 import OperatorsList from './pages/Admin/OperatorsList';
 import UpdateUser from './pages/Admin/UpdateUser';
 import AddOperator from './pages/Admin/AddOperator';
+import AppointmentDetails from './pages/Doctor/AppointmentDetail';
 
 const App = () => {
 
   const { dToken } = useContext(DoctorContext)
-  const { aToken } = useContext(AdminContext)
+  const { atoken } = useContext(AdminContext)
 
-  return dToken || aToken ? (
+  return dToken || atoken ? (
     <div className='bg-[#F8F9FD]'>
       <ToastContainer />
       <Navbar />
@@ -45,6 +46,7 @@ const App = () => {
           <Route path='/doctor-profile' element={<DoctorProfile />} />
           <Route path='/doctor-profile/:docId' element={<UpdateDoctorProfile />} />
           <Route path='/update-user/:userId' element={<UpdateUser />} />
+          <Route path="/appointment/:id" element={<AppointmentDetails />} />
           
         </Routes>
       </div>

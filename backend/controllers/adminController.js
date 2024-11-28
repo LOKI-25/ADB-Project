@@ -7,6 +7,9 @@ import { v2 as cloudinary } from "cloudinary";
 import userModel from "../models/userModel.js";
 import operatorModel from "../models/operatorModel.js";
 import adminModel from "../models/adminModel.js";
+import timeSlotModel from "../models/timeSlotModel.js";
+import paymentModel from "../models/paymentModel.js";
+
 
 // API for admin login
 const loginAdmin = async (req, res) => {
@@ -72,7 +75,7 @@ const addDoctor = async (req, res) => {
 
     try {
 
-        const { name, email, password, speciality, degree, experience, about, fees, address } = req.body
+        const { name, email, password, speciality, degree, experience, about, fees, address,availableDays,startTime,endTime } = req.body
         const imageFile = req.file
 
         // check for all data to add doctor
@@ -105,6 +108,13 @@ const addDoctor = async (req, res) => {
         // upload image to cloudinary
         const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
         const imageUrl = imageUpload.secure_url
+        const timeSlot = new timeSlotModel({
+            availableDays: JSON.parse(availableDays),
+            startTime,
+            endTime
+        });
+
+        await timeSlot.save();
 
         const doctorData = {
             name,
@@ -118,7 +128,8 @@ const addDoctor = async (req, res) => {
             fees,
             address: JSON.parse(address),
             createdById:req.headers.operator_id,
-            date: Date.now()
+            date: Date.now(),
+            timeSlotId: timeSlot._id
         }
 
         const newDoctor = new doctorModel(doctorData)
@@ -147,15 +158,30 @@ const allDoctors = async (req, res) => {
 // API to get all users list for admin panel
 const allUsers = async (req, res) => {
     try {
+        const users = await userModel.find({}).select('-password').lean(); // Convert users to plain objects
+        const enrichedUsers = await Promise.all(
+            users.map(async (user) => {
+                if (user.paymentId) {
+                    const payment = await paymentModel.findById(user.paymentId).lean();
+                    if (payment) {
+                        user.cardDetails = payment.cardDetails || null;
+                        user.insuranceId = payment.insuranceId || null;
+                    }
+                } else {
+                    user.cardDetails = null;
+                    user.insuranceId = null;
+                }
+                return user;
+            })
+        );
 
-        const users = await userModel.find({}).select('-password')
-        res.json({ success: true, users })
-
+        res.json({ success: true, users: enrichedUsers });
     } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+        console.error(error);
+        res.json({ success: false, message: error.message });
     }
-}
+};
+
 
 // API to get all operators list for admin panel
 const allOperators = async (req, res) => {
@@ -225,14 +251,14 @@ const updateUserProfile = async (req, res) => {
 
     try {
 
-        const { userId, name, phone, address, dob, gender } = req.body
+        const { userId, name, phone, address, dob, gender,cardDetails,insuranceId } = req.body
         const imageFile = req.file
 
         if (!name || !phone || !dob || !gender) {
             return res.json({ success: false, message: "Data Missing" })
         }
 
-        await userModel.findByIdAndUpdate(userId, { name, phone, address: (address), dob, gender })
+        
 
         if (imageFile) {
 
@@ -242,6 +268,21 @@ const updateUserProfile = async (req, res) => {
 
             await userModel.findByIdAndUpdate(userId, { image: imageURL })
         }
+        // create payment and health details object
+        const paymentDetails = {
+            cardDetails:(cardDetails),
+            insuranceId
+        }
+        const user = await userModel.find({ _id: userId })
+        if(user.paymentId == null && (paymentDetails.cardDetails != null || paymentDetails.insuranceId != null)){
+            const newPayment = new paymentModel(paymentDetails)
+            const payment=await newPayment.save()
+            await userModel.findByIdAndUpdate(userId, { name, phone, address: (address), dob, gender, paymentId: payment._id })
+        }
+        else if(user.paymentId != null){
+            await paymentModel.findByIdAndUpdate(user.paymentId, { cardDetails, insuranceId })
+        }
+        await userModel.findByIdAndUpdate(userId, { name, phone, address: (address), dob, gender })
 
         res.json({ success: true, message: 'Profile Updated' })
 

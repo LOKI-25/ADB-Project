@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 
 const prescriptionSchema = new mongoose.Schema({
-    appointmentID: { type: String, required: true },
+
+    pharmacyStore: { type: String, required: true },
+    startDate: { type: String, required: true },
+    endDate: { type: String, required: true },
     medicines: { type: Array, required: true,default:[] },
 })
 

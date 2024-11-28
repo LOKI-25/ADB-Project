@@ -5,17 +5,17 @@ import { useNavigate } from 'react-router-dom'
 
 const UsersList = () => {
   
-  const { aToken, users, getallUsers } = useContext(AdminContext) // Assuming `getAllUsers` gets the list of users from backend
+  const { atoken, users, getallUsers } = useContext(AdminContext) // Assuming `getAllUsers` gets the list of users from backend
   const [searchTerm, setSearchTerm] = useState('') // For managing search term
   const [filteredUsers, setFilteredUsers] = useState([]) // For displaying filtered users
 
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (aToken) {
+    if (atoken) {
       getallUsers()
     }
-  }, [aToken])
+  }, [atoken])
 
   useEffect(() => {
     console.log(users)
@@ -37,7 +37,7 @@ const UsersList = () => {
   }, [searchTerm, users])
 
   const handleViewUser = (user) => {
-    navigate(`/update-user/${user._id}`, { state: { userData: user } })
+    navigate(`/update-user/${user._id}`, { state: { patientData: user } })
   }
 
   return (

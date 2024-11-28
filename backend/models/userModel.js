@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, default: 'Not Selected' },
     dob: { type: String, default: 'Not Selected' },
     password: { type: String, required: true },
-    role: { type: String, default: 'user' }
+    role: { type: String, default: 'user' },
+    paymentId : { type: String, default: null},
 })
 
 const userModel = mongoose.models.patient || mongoose.model("patient", userSchema);

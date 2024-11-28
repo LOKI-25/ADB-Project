@@ -4,19 +4,19 @@ import { useNavigate } from 'react-router-dom'
 
 const DoctorsList = () => {
 
-  const { doctors , aToken , getAllDoctors} = useContext(AdminContext)
+  const { doctors , atoken , getAllDoctors} = useContext(AdminContext)
 
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (aToken) {
+    if (atoken) {
         getAllDoctors()
     }
-}, [aToken])
+}, [atoken])
 
   return (
     <div className='m-5 max-h-[90vh] overflow-y-scroll'>
-      <h1 className='text-lg font-medium'>All Doctors</h1>
+    {doctors ? <h1 className='text-lg font-medium'>All Doctors</h1> : <p className='p-4 text-gray-500'>No doctors found</p>}
       <div className='w-full flex flex-wrap gap-4 pt-5 gap-y-6'>
         {doctors.map((item, index) => (
           <div onClick={() => navigate(`/doctor-profile/${item._id}`)} className='border border-[#C9D8FF] rounded-xl max-w-56 overflow-hidden cursor-pointer group' key={index}>

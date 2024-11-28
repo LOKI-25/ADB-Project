@@ -13,11 +13,11 @@ const UpdateDoctorProfile = () => {
     const { docId } = useParams()
     const { backendUrl, currency } = useContext(AppContext)
     const [isEdit, setIsEdit] = useState(false)
-    const [atoken, setAToken] = useState(localStorage.getItem('aToken') ? localStorage.getItem('aToken') : '')
+    const [atoken, setAToken] = useState(localStorage.getItem('atoken') ? localStorage.getItem('atoken') : '')
 
     const getProfileData = async () => {
         try {
-            const { data } = await axios.get(`${backendUrl}/api/admin/profile/${docId}`,{headers:{atoken:atoken}})
+            const { data } = await axios.get(`${backendUrl}/api/admin/doctor-profile/${docId}`,{headers:{atoken:atoken}})
             if (data.success) {
                 setProfileData(data.profileData)
             } else {

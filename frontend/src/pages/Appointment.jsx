@@ -5,18 +5,21 @@ import { assets } from '../assets/assets'
 import RelatedDoctors from '../components/RelatedDoctors'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import BookAppointmentModal from '../components/BookAppointmentModal'
 
 const Appointment = () => {
 
     const { docId } = useParams()
     const { doctors, currencySymbol, backendUrl, token, getDoctosData } = useContext(AppContext)
     const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-    const {userData} = useContext(AppContext)
+    const {patientData} = useContext(AppContext)
+    console.log("Intial Patent Data",patientData);
 
     const [docInfo, setDocInfo] = useState(false)
     const [docSlots, setDocSlots] = useState([])
     const [slotIndex, setSlotIndex] = useState(0)
     const [slotTime, setSlotTime] = useState('')
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const navigate = useNavigate()
 
@@ -87,7 +90,8 @@ const Appointment = () => {
 
     }
 
-    const bookAppointment = async () => {
+    const bookAppointment = async (bookingDetails) => {
+        console.log("boking appointment called")
 
         if (!token) {
             toast.warning('Login to book appointment')
@@ -98,25 +102,54 @@ const Appointment = () => {
             toast.warning('Select a slot to book appointment')
             return
         }
+        var payment = null 
+        console.log("old patient Data/n and new booking details are ",patientData,bookingDetails);
+        if(patientData.insuranceId!=bookingDetails.insuranceId || patientData.cardDetails!=bookingDetails.cardDetails){
+                const { data } = await axios.post(
+                    backendUrl + "/api/user/create-payment",
+                    { insuranceId: bookingDetails.insuranceId 
+                         , cardDetails: bookingDetails.cardDetails },
+                    { headers: { token } }
+                  );
+                  if (data.success) {
+                  payment = data
+                  console.log(payment)
+                  toast.success("Payment details updated successfully");
+                  }
+                    else{
+                        toast.error("Failed to update payment details")
+                    }
+        }
 
         const date = docSlots[slotIndex][0].datetime
+
+        const reason = bookingDetails.reason
+        const paymentMethod = bookingDetails.paymentMethod
+
 
         let day = date.getDate()
         let month = date.getMonth() 
         let year = date.getFullYear()
 
         const slotDate = day + "_" + month + "_" + year 
+        const userId = patientData._id
+        
 
         try {
 
-            const { data } = await axios.post(backendUrl + '/api/user/book-appointment', { docId, slotDate, slotTime }, { headers: { token } })
+            const { data } = await axios.post(backendUrl + '/api/user/book-appointment', { docId, slotDate, payment, slotTime,reason,paymentMethod }, { headers: { token } })
+           console.log("booking appointmenrt",data)
             if (data.success) {
+                console.log("booking appointmenrt success")
                 toast.success(data.message)
                 getDoctosData()
+
                 navigate('/my-appointments')
             } else {
                 toast.error(data.message)
             }
+            setIsModalOpen(false);
+
 
         } catch (error) {
             console.log(error)
@@ -129,6 +162,7 @@ const Appointment = () => {
     useEffect(() => {
         if (doctors.length > 0) {
             fetchDocInfo()
+            setIsModalOpen(false);
         }
     }, [doctors, docId])
 
@@ -191,13 +225,20 @@ const Appointment = () => {
                     ))}
                 </div>
 
-                <button onClick={bookAppointment} className='bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6'>Book an appointment</button>
+                <button onClick={()=>setIsModalOpen(true)} className='bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6'>Book an appointment</button>
                 </>}
                 
                 {docSlots.length <1 &&<button className='bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6'>All appointments are booked</button>}
 
 
             </div>
+            {isModalOpen && (
+                <BookAppointmentModal
+                    onClose={() => setIsModalOpen(false)}
+                    onConfirm={bookAppointment}
+                    patientData={patientData}
+                />
+            )}
 
             {/* Listing Releated Doctors */}
             <RelatedDoctors speciality={docInfo.speciality} docId={docId} />

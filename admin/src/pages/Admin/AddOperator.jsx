@@ -18,7 +18,7 @@ const AddOperator = () => {
     const navigate = useNavigate();
 
     const { backendUrl } = useContext(AppContext)
-    const { aToken } = useContext(AdminContext)
+    const { atoken } = useContext(AdminContext)
 
     const onSubmitHandler = async (event) => {
         event.preventDefault()
@@ -35,7 +35,7 @@ const AddOperator = () => {
                 return toast.error('Passwords do not match')
             }
 
-            const { data } = await axios.post(backendUrl + '/api/admin/add-operator', opdata, { headers: { aToken } })
+            const { data } = await axios.post(backendUrl + '/api/admin/add-operator', opdata, { headers: { atoken } })
             if (data.success) {
                 toast.success(data.message)
                 navigate('/operators-list')
