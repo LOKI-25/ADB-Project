@@ -8,24 +8,24 @@ import {jwtDecode} from 'jwt-decode'
 const Sidebar = () => {
 
   const { dToken } = useContext(DoctorContext)
-  const { aToken } = useContext(AdminContext)
+  const { atoken } = useContext(AdminContext)
   const [role, setRole] = useState('')
 
   useEffect(() => {
-    if (aToken) {
+    if (atoken) {
       try {
-        const token_decode = jwtDecode(aToken)
+        const token_decode = jwtDecode(atoken)
         setRole(token_decode.role)
       } catch (err) {
         console.error("Token verification error:", err)
       }
     }
-  }, [aToken])
+  }, [atoken])
   
 
   return (
     <div className='min-h-screen bg-white border-r'>
-      {aToken && <ul className='text-[#515151] mt-5'>
+      {atoken && <ul className='text-[#515151] mt-5'>
 
         <NavLink to={'/admin-dashboard'} className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
           <img className='min-w-5' src={assets.home_icon} alt='' />

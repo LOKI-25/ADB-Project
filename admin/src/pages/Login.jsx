@@ -1,12 +1,14 @@
 import axios from 'axios'
 import React, { useContext, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DoctorContext } from '../context/DoctorContext'
 import { AdminContext } from '../context/AdminContext'
 import { toast } from 'react-toastify'
+import { use } from 'react'
 
 const Login = () => {
 
-  const [state, setState] = useState('Admin')
+  const [state, setState] = useState('Operator')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,16 +17,20 @@ const Login = () => {
 
   const { setDToken } = useContext(DoctorContext)
   const { setAToken } = useContext(AdminContext)
+  const navigate = useNavigate()
+
+  
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
 
-    if (state === 'Admin') {
+    if (state === 'Operator') {
 
       const { data } = await axios.post(backendUrl + '/api/admin/login', { email, password })
       if (data.success) {
         setAToken(data.token)
-        localStorage.setItem('aToken', data.token)
+        localStorage.setItem('atoken', data.token)
+        toast.success("Login Successful")
       } else {
         toast.error(data.message)
       }
@@ -34,7 +40,16 @@ const Login = () => {
       const { data } = await axios.post(backendUrl + '/api/doctor/login', { email, password })
       if (data.success) {
         setDToken(data.token)
+        console.log(data)
         localStorage.setItem('dToken', data.token)
+          // Redirect to set password if it's the doctor's first login
+          if(data.profileData?.available === false){
+            console.log("Inside pas")
+            let docId = data.profileData._id
+            toast.success("Please set your password")
+            navigate('/set-password',{ state: { docId} });
+          }
+          
       } else {
         toast.error(data.message)
       }
@@ -57,9 +72,9 @@ const Login = () => {
         </div>
         <button className='bg-primary text-white w-full py-2 rounded-md text-base'>Login</button>
         {
-          state === 'Admin'
+          state === 'Operator'
             ? <p>Doctor Login? <span onClick={() => setState('Doctor')} className='text-primary underline cursor-pointer'>Click here</span></p>
-            : <p>Admin Login? <span onClick={() => setState('Admin')} className='text-primary underline cursor-pointer'>Click here</span></p>
+            : <p>Operator Login? <span onClick={() => setState('Operator')} className='text-primary underline cursor-pointer'>Click here</span></p>
         }
       </div>
     </form>

@@ -5,29 +5,29 @@ import { useNavigate } from 'react-router-dom'
 
 const UsersList = () => {
   
-  const { aToken, users, getallUsers } = useContext(AdminContext) // Assuming `getAllUsers` gets the list of users from backend
+  const { atoken, users, getallUsers } = useContext(AdminContext) // Assuming `getAllUsers` gets the list of users from backend
   const [searchTerm, setSearchTerm] = useState('') // For managing search term
   const [filteredUsers, setFilteredUsers] = useState([]) // For displaying filtered users
 
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (aToken) {
+    if (atoken) {
       getallUsers()
     }
-  }, [aToken])
+  }, [atoken])
 
   useEffect(() => {
     console.log(users)
     setFilteredUsers(users) // Initialize with all users
   }, [users])
 
-  // Filter users based on search term (by id, name, email, or phone)
+  // Filter users based on search term (by id, firstname, email, or phone)
   useEffect(() => {
     if (searchTerm) {
       const filtered = users.filter(user => 
         user.id?.toString().includes(searchTerm.toLowerCase()) ||
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) 
       )
       setFilteredUsers(filtered)
@@ -37,7 +37,7 @@ const UsersList = () => {
   }, [searchTerm, users])
 
   const handleViewUser = (user) => {
-    navigate(`/update-user/${user._id}`, { state: { userData: user } })
+    navigate(`/update-user/${user._id}`, { state: { patientData: user } })
   }
 
   return (
@@ -76,7 +76,7 @@ const UsersList = () => {
               <p>{user._id}</p>
               <div className='flex items-center gap-2'>
                 <img src={user.image} className='w-8 rounded-full' alt="" />
-                <p>{user.name}</p>
+                <p>{user.firstname}</p>
               </div>
               <p>{user.email}</p>
               <p>{user.phone}</p>

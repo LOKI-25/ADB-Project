@@ -5,17 +5,17 @@ import { useNavigate } from 'react-router-dom'
 
 const OperatorsList = () => {
   
-  const { aToken, operators, getallOperators } = useContext(AdminContext) // Assuming `getAllUsers` gets the list of operators from backend
+  const { atoken, operators, getallOperators } = useContext(AdminContext) // Assuming `getAllUsers` gets the list of operators from backend
   const [searchTerm, setSearchTerm] = useState('') // For managing search term
   const [filteredUsers, setFilteredUsers] = useState([]) // For displaying filtered operators
 
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (aToken) {
+    if (atoken) {
       getallOperators()
     }
-  }, [aToken])
+  }, [atoken])
 
   useEffect(() => {
     setFilteredUsers(operators) // Initialize with all operators
@@ -36,7 +36,7 @@ const OperatorsList = () => {
   }, [searchTerm, operators])
 
   const handleViewUser = (user) => {
-    navigate(`/update-operator-profile/${user._id}`, { state: { userData: user } })
+    navigate(`/update-operator-profile/${user._id}`, { state: { patientData: user } })
   }
 
   return (
@@ -44,7 +44,7 @@ const OperatorsList = () => {
 
       {/* Search Box */}
       <div className='mb-3 flex justify-between'>
-        <p className='text-lg font-medium'>Users List</p>
+        <p className='text-lg font-medium'>Operators List</p>
         <input 
           type='text' 
           placeholder='Search by ID, Name, Email, or Phone' 

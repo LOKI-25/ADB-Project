@@ -8,9 +8,13 @@ const Login = () => {
 
   const [state, setState] = useState('Sign Up')
 
-  const [name, setName] = useState('')
+  const [firstname, setName] = useState('')
+  const [lastname, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [cpassword, setcPassword] = useState('')
+
+
 
   const navigate = useNavigate()
   const { backendUrl, token, setToken } = useContext(AppContext)
@@ -18,13 +22,21 @@ const Login = () => {
   const onSubmitHandler = async (event) => {
     event.preventDefault();
 
-    if (state === 'Sign Up') {
+    
 
-      const { data } = await axios.post(backendUrl + '/api/user/register', { name, email, password })
+
+    if (state === 'Sign Up') {
+      if (password !== cpassword) {
+        return toast.error('Passwords do not match')
+      }
+
+      const { data } = await axios.post(backendUrl + '/api/user/register', { firstname,lastname, email, password })
 
       if (data.success) {
         localStorage.setItem('token', data.token)
         setToken(data.token)
+        navigate('/')
+
       } else {
         toast.error(data.message)
       }
@@ -44,6 +56,14 @@ const Login = () => {
 
   }
 
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            navigate('/login'); // Redirect to login if token doesn't exist
+        }
+    }, [navigate]);
   useEffect(() => {
     if (token) {
       navigate('/')
@@ -57,9 +77,13 @@ const Login = () => {
         <p>Please {state === 'Sign Up' ? 'sign up' : 'log in'} to book appointment</p>
         {state === 'Sign Up'
           ? <div className='w-full '>
-            <p>Full Name</p>
-            <input onChange={(e) => setName(e.target.value)} value={name} className='border border-[#DADADA] rounded w-full p-2 mt-1' type="text" required />
+            <p>First Name</p>
+            <input onChange={(e) => setName(e.target.value)} value={firstname} className='border mb-1 border-[#DADADA] rounded w-full p-2 mt-1' type="text" required />
+            <p>Last Name</p>
+            <input onChange={(e) => setLastName(e.target.value)} value={lastname} className='border border-[#DADADA] rounded w-full p-2 mt-1' type="text"  />
+          
           </div>
+          
           : null
         }
         <div className='w-full '>
@@ -70,6 +94,11 @@ const Login = () => {
           <p>Password</p>
           <input onChange={(e) => setPassword(e.target.value)} value={password} className='border border-[#DADADA] rounded w-full p-2 mt-1' type="password" required />
         </div>
+        {state === 'Sign Up' &&
+        <div className='w-full '>
+          <p>Confirm Password</p>
+          <input onChange={(e) => setcPassword(e.target.value)} value={cpassword} className='border border-[#DADADA] rounded w-full p-2 mt-1' type="password" required />
+        </div> }
         <button className='bg-primary text-white w-full py-2 my-2 rounded-md text-base'>{state === 'Sign Up' ? 'Create account' : 'Login'}</button>
         {state === 'Sign Up'
           ? <p>Already have an account? <span onClick={() => setState('Login')} className='text-primary underline cursor-pointer'>Login here</span></p>

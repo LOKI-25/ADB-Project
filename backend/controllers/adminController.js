@@ -6,23 +6,33 @@ import validator from "validator";
 import { v2 as cloudinary } from "cloudinary";
 import userModel from "../models/userModel.js";
 import operatorModel from "../models/operatorModel.js";
+import adminModel from "../models/adminModel.js";
+import timeSlotModel from "../models/timeSlotModel.js";
+import paymentModel from "../models/paymentModel.js";
+
 
 // API for admin login
 const loginAdmin = async (req, res) => {
     try {
 
         const { email, password } = req.body
-        console.log(password)
-
-        var operator  = await operatorModel.findOne({email,password})
-
-
+        var operator  = await operatorModel.findOne({email})
         if (operator  || (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) ) {
             if (!operator) {
-                operator = operatorModel.create({ email, password,"role":"admin","name":"admin"})
+                const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
+                const hashedPassword = await bcrypt.hash(password, salt)
+                operator =await operatorModel.create({ email, password:hashedPassword,"role":"admin","name":"admin"})
             }
-            const token = jwt.sign({"email":email,'password':password,'role':operator.role}, process.env.JWT_SECRET)
+            const isMatch = await bcrypt.compare(password, operator.password)
+            if (!isMatch) {
+                return res.json({ success: false, message: "Invalid credentials" })
+            }
+        
+            const token = jwt.sign({"email":email,'password':password,'role':operator.role,'id':operator._id.toString()}, process.env.JWT_SECRET)
+
+
             res.json({ success: true, token })
+            
         } else {
             res.json({ success: false, message: "Invalid credentials" })
         }
@@ -49,6 +59,21 @@ const appointmentsAdmin = async (req, res) => {
 
 }
 
+// checkInAppointment
+const checkInAppointment = async (req, res) => {
+    try {
+        const { appointmentId } = req.body
+        await appointmentModel.findByIdAndUpdate
+        (appointmentId, { isCompleted: false })
+        res.json({ success: true, message: 'Appointment Checked In' })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+
+}
+
+
 // API for appointment cancellation
 const appointmentCancel = async (req, res) => {
     try {
@@ -70,8 +95,14 @@ const addDoctor = async (req, res) => {
 
     try {
 
-        const { name, email, password, speciality, degree, experience, about, fees, address } = req.body
+        const { firstname,lastname,zip,state,phone,city, email, password, speciality, degree, experience, about, fees, address,availableDays} = req.body
         const imageFile = req.file
+        for (let i = 0; i < availableDays.length; i++) {
+            availableDays[i] = JSON.parse(availableDays[i]);
+        }
+        
+
+
 
         // check for all data to add doctor
         const all_docs = await doctorModel.find({email:email})
@@ -82,7 +113,7 @@ const addDoctor = async (req, res) => {
 
 
         // checking for all data to add doctor
-        if (!name || !email || !password || !speciality || !degree || !experience || !about || !fees || !address) {
+        if (!firstname || !lastname || !email || !password || !speciality || !degree || !experience || !about || !fees || !address) {
             return res.json({ success: false, message: "Missing Details" })
         }
 
@@ -98,24 +129,36 @@ const addDoctor = async (req, res) => {
 
         // hashing user password
         const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
-        // const hashedPassword = await bcrypt.hash(password, salt)
+        const hashedPassword = await bcrypt.hash(password, salt)
 
         // upload image to cloudinary
         const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
         const imageUrl = imageUpload.secure_url
+        const timeSlot = new timeSlotModel({
+            availableDays: availableDays
+        });
+
+        await timeSlot.save();
 
         const doctorData = {
-            name,
+            firstname,
+            lastname,
+            city,
+            state,
+            zip,
+            phone,
             email,
             image: imageUrl,
-            password: password,
+            password: hashedPassword,
             speciality,
             degree,
             experience,
             about,
             fees,
             address: JSON.parse(address),
-            date: Date.now()
+            createdById:req.headers.operator_id,
+            date: Date.now(),
+            timeSlotId: timeSlot._id
         }
 
         const newDoctor = new doctorModel(doctorData)
@@ -144,15 +187,85 @@ const allDoctors = async (req, res) => {
 // API to get all users list for admin panel
 const allUsers = async (req, res) => {
     try {
+        const users = await userModel.find({}).select('-password').lean(); // Convert users to plain objects
+        const enrichedUsers = await Promise.all(
+            users.map(async (user) => {
+                if (user.paymentId) {
+                    const payment = await paymentModel.findById(user.paymentId).lean();
+                    if (payment) {
+                        user.cardDetails = payment.cardDetails || null;
+                        user.insuranceId = payment.insuranceId || null;
+                    }
+                } else {
+                    user.cardDetails = null;
+                    user.insuranceId = null;
+                }
+                return user;
+            })
+        );
 
-        const users = await userModel.find({}).select('-password')
-        res.json({ success: true, users })
-
+        res.json({ success: true, users: enrichedUsers });
     } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const updateAppointment = async (req, res) => {
+    try {
+        const { appointmentId,docId, note, slotDate, slotTime } = req.body;
+        console.log(appointmentId,slotDate, slotTime);
+
+        // Prepare the update object
+        const updateData = {};
+        
+        if (note) {
+            updateData.note = note;
+        }
+        if (slotDate && slotTime) {
+            updateData.slotDate = slotDate;
+            updateData.slotTime = slotTime;
+            
+        
+        const docData = await doctorModel.findById(docId);
+
+
+        let slots_booked = docData.slots_booked
+
+        // checking for slot availablity 
+        if (slots_booked[slotDate]) {
+            if (slots_booked[slotDate].includes(slotTime)) {
+                return res.json({ success: false, message: 'Slot Not Available' })
+            }
+            else {
+                slots_booked[slotDate].push(slotTime)
+            }
+        } else {
+            slots_booked[slotDate] = []
+            slots_booked[slotDate].push(slotTime)
+        }
+        console.log(slots_booked)
+
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked: slots_booked })
+    }
+
+
+
+        // Perform the update
+        const updatedAppointment = await appointmentModel.findByIdAndUpdate(appointmentId, updateData, { new: true });
+        console.log(updateData);
+
+        if (!updatedAppointment) {
+            return res.json({ success: false, message: 'Appointment not found' });
+        }
+
+        res.json({ success: true, message: 'Appointment Updated', updatedAppointment });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
     }
 }
+
 
 // API to get all operators list for admin panel
 const allOperators = async (req, res) => {
@@ -205,10 +318,9 @@ const doctorProfile = async (req, res) => {
 const updateDoctorProfile = async (req, res) => {
     try {
 
+        const { docId,firstname,lastname,zip,city,state,phone, fees, address, available } = req.body
 
-        const { docId, fees, address, available } = req.body
-
-        await doctorModel.findByIdAndUpdate(docId, { fees, address, available })
+        await doctorModel.findByIdAndUpdate(docId, { fees,firstname,city,lastname,zip,state,phone, address, available })
 
         res.json({ success: true, message: 'Profile Updated' })
 
@@ -222,14 +334,14 @@ const updateUserProfile = async (req, res) => {
 
     try {
 
-        const { userId, name, phone, address, dob, gender } = req.body
+        const { userId, firstname,lastname,zip,state,city, phone, address, dob, gender,cardDetails,insuranceId } = req.body
         const imageFile = req.file
 
-        if (!name || !phone || !dob || !gender) {
+        if (!firstname || !phone || !dob || !gender) {
             return res.json({ success: false, message: "Data Missing" })
         }
 
-        await userModel.findByIdAndUpdate(userId, { name, phone, address: (address), dob, gender })
+        
 
         if (imageFile) {
 
@@ -239,6 +351,21 @@ const updateUserProfile = async (req, res) => {
 
             await userModel.findByIdAndUpdate(userId, { image: imageURL })
         }
+        // create payment and health details object
+        const paymentDetails = {
+            cardDetails:(cardDetails),
+            insuranceId
+        }
+        const user = await userModel.find({ _id: userId })
+        if(user.paymentId == null && (paymentDetails.cardDetails != null || paymentDetails.insuranceId != null)){
+            const newPayment = new paymentModel(paymentDetails)
+            const payment=await newPayment.save()
+            await userModel.findByIdAndUpdate(userId, { firstname,lastname,zip,city,state,phone, address: (address), dob, gender, paymentId: payment._id })
+        }
+        else if(user.paymentId != null){
+            await paymentModel.findByIdAndUpdate(user.paymentId, { cardDetails, insuranceId })
+        }
+        await userModel.findByIdAndUpdate(userId, { firstname,lastname,zip,city,state,phone, address: (address), dob, gender })
 
         res.json({ success: true, message: 'Profile Updated' })
 
@@ -282,11 +409,18 @@ const addOperator = async (req, res) => {
 
     try {
 
-        const { name, email, password, address } = req.body
+        const { name, email, password, address,roleofop } = req.body
+        
 
-        ops = operatorModel.find({email:email})
+        const ops = operatorModel.find({email:email})
         if (ops.length > 0) {
             return res.json({ success: false, message: "Operator already exists" })
+        }
+        if (roleofop === "admin"){
+            const adm = adminModel.find({email:email})
+            if(adm.length>0){
+            return res.json({ success: false, message: "Admin already exists" })
+            }
         }
        
 
@@ -306,21 +440,30 @@ const addOperator = async (req, res) => {
         }
 
         // hashing user password
-        // const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
-        // const hashedPassword = await bcrypt.hash(password, salt)
+        const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
+        const hashedPassword = await bcrypt.hash(password, salt)
         
 
         const operatorData = {
             name,
             email,
-            password: password,
+            password: hashedPassword,
             address: JSON.parse(address),
-            role: 'operator',
-            date: Date.now()
+            role: roleofop,
+            date: Date.now(),
+            createdById:req.headers.user_id
         }
 
         const newop = new operatorModel(operatorData)
         await newop.save()
+        if(roleofop==="admin"){
+            const adminData = {
+                name,email,hashedPassword
+            }
+            const newadm = new adminModel(adminData)
+            await newadm.save()
+            console.log("ADMIN Created")
+        }
         res.json({ success: true, message: 'Operator Added' })
 
     } catch (error) {
@@ -332,6 +475,7 @@ const addOperator = async (req, res) => {
 export {
     loginAdmin,
     appointmentsAdmin,
+    updateAppointment,
     appointmentCancel,
     addDoctor,
     allDoctors,
@@ -343,5 +487,6 @@ export {
     updateUserProfile,
     updateOperatorProfile,
     deleteUser,
-    addOperator
+    addOperator,
+    checkInAppointment
 }
