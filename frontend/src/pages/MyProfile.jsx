@@ -23,7 +23,7 @@ const MyProfile = () => {
       const formData = new FormData();
 
       if (
-        !patientData.name ||
+        !patientData.firstname ||
         !patientData.phone ||
         !patientData.address.line1 ||
         !patientData.gender ||
@@ -33,7 +33,11 @@ const MyProfile = () => {
         return toast.error("All fields are required");
       }
 
-      formData.append("name", patientData.name);
+      formData.append("firstname", patientData.firstname);
+      formData.append("lastname", patientData.lastname);
+      formData.append("zip",patientData.zip)
+      formData.append("city",patientData.city)
+      formData.append("state",patientData.state)
       formData.append("phone", patientData.phone);
       formData.append("address", JSON.stringify(patientData.address));
       formData.append("gender", patientData.gender);
@@ -69,11 +73,12 @@ const MyProfile = () => {
 
       if (
         patientData.image &&
-        patientData.name &&
+        patientData.firstname &&
         patientData.gender &&
         patientData.address.line1 &&
         patientData.dob &&
-        patientData.name &&
+        patientData.dob !== "Not Selected" &&
+        patientData.firstname &&
         patientData.email
       ) {
         setIsEdit(false);
@@ -109,18 +114,37 @@ const MyProfile = () => {
         <img className="w-36 rounded" src={patientData.image} alt="" />
       )}
 
-      {isEdit ? (
+      {isEdit ? (<>
+        <p className="font-medium">First Name</p>
+
         <input
           className="bg-gray-50 text-3xl font-medium max-w-60"
           type="text"
           onChange={(e) =>
-            setpatientData((prev) => ({ ...prev, name: e.target.value }))
+            setpatientData((prev) => ({ ...prev, firstname: e.target.value }))
           }
-          value={patientData.name}
+          value={patientData.firstname}
         />
+        </>
       ) : (
         <p className="font-medium text-3xl text-[#262626] mt-4">
-          {patientData.name}
+          {patientData.firstname}
+        </p>
+      )}
+
+      {isEdit ? (<>
+        <p className="font-medium">Last Name</p>
+        <input
+          className="bg-gray-50 text-3xl font-medium max-w-60"
+          type="text"
+          onChange={(e) =>
+            setpatientData((prev) => ({ ...prev, lastname: e.target.value }))
+          }
+          value={patientData.lastname}
+        /></>
+      ) : (
+        <p className="font-medium text-3xl text-[#262626] mt-4">
+          {patientData.lastname}
         </p>
       )}
 
@@ -131,7 +155,8 @@ const MyProfile = () => {
         <div className="grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-[#363636]">
           <p className="font-medium">Email id:</p>
           <p className="text-blue-500">{patientData.email}</p>
-          <p className="font-medium">Phone:</p>
+          <p className="font-medium"><span className="text-red-600 font-bold">*</span> Phone:</p>
+          
 
           {isEdit ? (
             <input
@@ -147,7 +172,7 @@ const MyProfile = () => {
             <p className="text-blue-500">{patientData.phone}</p>
           )}
 
-          <p className="font-medium">Address:</p>
+          <p className="font-medium"><span className="text-red-600 font-bold">*</span> Address:</p>
 
           {isEdit ? (
             <p>
@@ -181,12 +206,37 @@ const MyProfile = () => {
               {patientData.address.line1} <br /> {patientData.address.line2}
             </p>
           )}
+
+          <p className="font-medium">City:</p>
+          {isEdit ? (
+            <input className="bg-gray-50" onChange={(e) =>
+            setpatientData((prev) => ({ ...prev, city: e.target.value }))
+          }type="text" required />
+          ) : (
+            <p className="text-gray-500">{patientData.city}</p>
+          )
+            }
+
+          <p className="font-medium">State:</p>
+          {isEdit ? (
+            <input className="bg-gray-50" onChange={(e) =>
+            setpatientData((prev) => ({ ...prev, state: e.target.value }))
+          }type="text" required />):(
+          <p className="text-gray-500">{patientData.state}</p>)}
+
+          <p className="font-medium">Zip:</p>
+          {isEdit ? (
+            <input className="bg-gray-50" onChange={(e) =>
+            setpatientData((prev) => ({ ...prev, zip: e.target.value }))
+          }type="text" required />):(
+          <p className="text-gray-500">{patientData.zip}</p>)}
+
         </div>
       </div>
       <div>
         <p className="text-[#797979] underline mt-3">BASIC INFORMATION</p>
         <div className="grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-gray-600">
-          <p className="font-medium">Gender:</p>
+          <p className="font-medium"><span className="text-red-600 font-bold">*</span> Gender:</p>
 
           {isEdit ? (
             <select
@@ -205,7 +255,7 @@ const MyProfile = () => {
             <p className="text-gray-500">{patientData.gender}</p>
           )}
 
-          <p className="font-medium">Birthday:</p>
+          <p className="font-medium"><span className="text-red-600 font-bold">*</span> Birthday:</p>
 
           {isEdit ? (
             <input
@@ -231,7 +281,7 @@ const MyProfile = () => {
                 </label>
                 <input
                   className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  type="text"
+                  type="number"
                   required
                   onChange={(e) =>
                     setpatientData((prev) => ({
@@ -245,26 +295,62 @@ const MyProfile = () => {
                   value={patientData.cardDetails?.number || ""}
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">
-                  Expiry Date (MM/YYYY)
-                </label>
-                <input
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  type="text"
-                  required
-                  onChange={(e) =>
-                    setpatientData((prev) => ({
-                      ...prev,
-                      cardDetails: {
-                        ...prev.cardDetails,
-                        expiryDate: e.target.value,
-                      },
-                    }))
-                  }
-                  value={patientData.cardDetails?.expiryDate || ""}
-                />
-              </div>
+
+
+
+              <div className="flex gap-2">
+  <select
+    className="p-2 border border-gray-300 rounded-md"
+    required
+    onChange={(e) =>
+      setpatientData((prev) => ({
+        ...prev,
+        cardDetails: {
+          ...prev.cardDetails,
+          expiryDate: `${e.target.value}/${patientData.cardDetails?.expiryDate?.split("/")[1] || ""}`,
+        },
+      }))
+    }
+  >
+    <option value="" disabled selected>
+      Month
+    </option>
+    {Array.from({ length: 12 }, (_, i) => (
+      <option key={i} value={String(i + 1).padStart(2, "0")}>
+        {new Date(0, i).toLocaleString("default", { month: "long" })}
+      </option>
+    ))}
+  </select>
+
+  <input
+    className="p-2 border border-gray-300 rounded-md"
+    type="number"
+    min={new Date().getFullYear()} // Optional: restrict to current or future years
+    placeholder="Year"
+    required
+    onChange={(e) =>
+      setpatientData((prev) => ({
+        ...prev,
+        cardDetails: {
+          ...prev.cardDetails,
+          expiryDate: `${patientData.cardDetails?.expiryDate?.split("/")[0] || ""}/${e.target.value}`,
+        },
+      }))
+    }
+    value={patientData.cardDetails?.expiryDate?.split("/")[1] || ""}
+  />
+</div>
+
+
+
+
+
+            
+
+
+
+
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
                   Insurance ID

@@ -56,7 +56,7 @@ const DoctorDashboard = () => {
             <div className='flex items-center px-6 py-3 gap-3 hover:bg-gray-100' key={index}>
               <img className='rounded-full w-10' src={item.patientData.image} alt="" />
               <div className='flex-1 text-sm'>
-                <p className='text-gray-800 font-medium'>{item.patientData.name}</p>
+                <p className='text-gray-800 font-medium'>{item.patientData.firstname}</p>
                 <p className='text-gray-600 '>Booking on {slotDateFormat(item.slotDate)}</p>
               </div>
               {item.cancelled

@@ -22,12 +22,12 @@ const UsersList = () => {
     setFilteredUsers(users) // Initialize with all users
   }, [users])
 
-  // Filter users based on search term (by id, name, email, or phone)
+  // Filter users based on search term (by id, firstname, email, or phone)
   useEffect(() => {
     if (searchTerm) {
       const filtered = users.filter(user => 
         user.id?.toString().includes(searchTerm.toLowerCase()) ||
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) 
       )
       setFilteredUsers(filtered)
@@ -76,7 +76,7 @@ const UsersList = () => {
               <p>{user._id}</p>
               <div className='flex items-center gap-2'>
                 <img src={user.image} className='w-8 rounded-full' alt="" />
-                <p>{user.name}</p>
+                <p>{user.firstname}</p>
               </div>
               <p>{user.email}</p>
               <p>{user.phone}</p>

@@ -44,7 +44,7 @@ const OperatorsList = () => {
 
       {/* Search Box */}
       <div className='mb-3 flex justify-between'>
-        <p className='text-lg font-medium'>Users List</p>
+        <p className='text-lg font-medium'>Operators List</p>
         <input 
           type='text' 
           placeholder='Search by ID, Name, Email, or Phone' 

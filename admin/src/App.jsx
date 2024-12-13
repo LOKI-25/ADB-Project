@@ -1,11 +1,11 @@
-import  { useContext } from 'react'
+import { useContext, useEffect } from 'react';
 import { DoctorContext } from './context/DoctorContext';
 import { AdminContext } from './context/AdminContext';
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Admin/Dashboard';
 import AllAppointments from './pages/Admin/AllAppointments';
 import AddDoctor from './pages/Admin/AddDoctor';
@@ -20,11 +20,19 @@ import OperatorsList from './pages/Admin/OperatorsList';
 import UpdateUser from './pages/Admin/UpdateUser';
 import AddOperator from './pages/Admin/AddOperator';
 import AppointmentDetails from './pages/Doctor/AppointmentDetail';
+import SetPassword from './pages/Doctor/SetPassword'; // Import SetPassword component
 
 const App = () => {
+  const { dToken, profileData } = useContext(DoctorContext);
+  const { atoken } = useContext(AdminContext);
+  const navigate = useNavigate();
 
-  const { dToken } = useContext(DoctorContext)
-  const { atoken } = useContext(AdminContext)
+  useEffect(() => {
+    // Redirect to set password if it's the doctor's first login
+    if (dToken  && profileData?.available === false) {
+      navigate('/set-password');
+    }
+  }, [dToken, profileData, navigate]);
 
   return dToken || atoken ? (
     <div className='bg-[#F8F9FD]'>
@@ -46,8 +54,8 @@ const App = () => {
           <Route path='/doctor-profile' element={<DoctorProfile />} />
           <Route path='/doctor-profile/:docId' element={<UpdateDoctorProfile />} />
           <Route path='/update-user/:userId' element={<UpdateUser />} />
-          <Route path="/appointment/:id" element={<AppointmentDetails />} />
-          
+          <Route path='/appointment/:id' element={<AppointmentDetails />} />
+          <Route path='/set-password' element={<SetPassword />} /> {/* New route */}
         </Routes>
       </div>
     </div>
@@ -56,7 +64,7 @@ const App = () => {
       <ToastContainer />
       <Login />
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;

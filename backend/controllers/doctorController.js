@@ -12,21 +12,51 @@ const loginDoctor = async (req, res) => {
     const user = await doctorModel.findOne({ email });
 
     if (!user) {
-      return res.json({ success: false, message: "Invalid credentials" });
+      return res.json({ success: false, message: "Invalid credentials!" });
     }
 
-    // const isMatch = await bcrypt.compare(password, user.password)
-    const isMatch = password == user.password;
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-      res.json({ success: true, token });
+      res.json({ success: true, token, profileData: user });
     } else {
       res.json({ success: false, message: "Invalid credentials" });
     }
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
+  }
+};
+
+const setPassword = async (req, res) => {
+  try {
+    const { docId, newPassword } = req.body;
+    console.log(docId, newPassword);
+
+    // Find the doctor
+    const doctor = await doctorModel.findById(docId);
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    // Check if the doctor is setting a password for the first time
+    if (doctor.available) {
+      return res.status(400).json({ success: false, message: "Password already set" });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the doctor's password and set available to true
+    doctor.password = hashedPassword;
+    doctor.available = true;
+    await doctor.save();
+
+    res.json({ success: true, message: "Password set successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -87,7 +117,7 @@ const appointmentComplete = async (req, res) => {
 // API to get all doctors list for Frontend
 const doctorList = async (req, res) => {
   try {
-    const doctors = await doctorModel.find({}).select(["-password", "-email"]);
+    const doctors = await doctorModel.find({}).select(["-password", "-email"]).populate('timeSlotId');
     res.json({ success: true, doctors });
   } catch (error) {
     console.log(error);
@@ -115,8 +145,8 @@ const changeAvailablity = async (req, res) => {
 const doctorProfile = async (req, res) => {
   try {
     const { docId } = req.body;
-    const profileData = await doctorModel.findById(docId).select("-password");
-
+    const profileData = await doctorModel.findById(docId).select("-password").populate('timeSlotId'); ;
+    console.log("Doc", profileData);
     res.json({ success: true, profileData });
   } catch (error) {
     console.log(error);
@@ -127,9 +157,43 @@ const doctorProfile = async (req, res) => {
 // API to update doctor profile data from  Doctor Panel
 const updateDoctorProfile = async (req, res) => {
   try {
-    const { docId, fees, address, available } = req.body;
+    const { docId,city,state,zip,phone,  fees, address, available,availableDays } = req.body;
+    const docData = await doctorModel.findById(docId);
 
-    await doctorModel.findByIdAndUpdate(docId, { fees, address, available });
+    if (available !== docData.available && available === false) {
+      const today = new Date();
+      const todayString = `${today.getDate()}_${today.getMonth()}_${today.getFullYear()}`;
+
+      // Find and cancel all appointments for today
+      const appointments = await appointmentModel.find({
+        docId,
+        slotDate: todayString,
+        isCompleted: false,
+        cancelled: false,
+      });
+
+      for (const appointment of appointments) {
+        await appointmentModel.findByIdAndUpdate(appointment._id, { cancelled: true });
+      }
+    }
+
+
+    if(availableDays && availableDays.length > 0){
+    
+    if(docData.timeSlotId){
+      const timeSlotData = await timeSlotModel.findById(docData.timeSlotId);
+      timeSlotData.availableDays = availableDays;
+      await timeSlotData.save();
+    }
+    else{
+      const newTimeSlot = new timeSlotModel({ availableDays });
+      await newTimeSlot.save();
+      await doctorModel.findByIdAndUpdate(docId, { timeSlotId: newTimeSlot._id });
+    }
+  }
+
+
+    await doctorModel.findByIdAndUpdate(docId, {city, state,zip,phone , fees, address, available,availableDays });
 
     res.json({ success: true, message: "Profile Updated" });
   } catch (error) {
@@ -191,6 +255,17 @@ const createPrescription = async (req, res) => {
   }
 };
 
+const getTimeSlots = async (req, res) => {
+  try {
+    const { docId } = req.body;
+    const timeSlots = await timeSlotModel.find({ docId });
+    res.json({ success: true, timeSlots });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 const createTimeSlot = async (req, res) => {
   try {
     const { docId, slotDate, slotTime } = req.body;
@@ -199,6 +274,7 @@ const createTimeSlot = async (req, res) => {
     res.json({ success: true, message: "Time Slot Created" });
   } catch (error) {
     console.log(error);
+    res.json({ success: false, message: "Time Slot not Created" });
   }
 };
 
@@ -240,7 +316,7 @@ const updatePrescription = async (req, res) => {
         else{
             const newPrescription = new prescriptionModel(updatedData);
             await newPrescription.save();
-            await appointmentModel.findByIdAndUpdate(appointmentId, { prescriptionId: newPrescription._id });
+            await appointmentModel.findByIdAndUpdate(appointmentId, { prescriptionId: newPrescription._id, isCompleted: true });
         }
         res.json({ success: true, message: "Prescription Updated" });
     }
@@ -267,6 +343,7 @@ const updateAppointment = async (req, res) => {
 
 export {
   loginDoctor,
+  setPassword,
   appointmentsDoctor,
   appointmentCancel,
   doctorList,

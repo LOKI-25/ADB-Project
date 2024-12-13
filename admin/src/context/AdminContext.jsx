@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 
 export const AdminContext = createContext()
 
+
 const AdminContextProvider = (props) => {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL
@@ -17,6 +18,21 @@ const AdminContextProvider = (props) => {
     const [users, setUsers] = useState([])
     const [operators, setOperators] = useState([])
     const [dashData, setDashData] = useState(false)
+
+    const checkInAppointment = async (appointmentId) => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/admin/check-in-appointment', { appointmentId }, { headers: { atoken } })
+            if (data.success) {
+                toast.success(data.message)
+                getAllAppointments()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(error.message)
+        }
+    }
 
     // Getting all Doctors data from Database using API
     const getAllDoctors = async () => {
@@ -147,6 +163,7 @@ const AdminContextProvider = (props) => {
     const value = {
         atoken, setAToken,
         doctors,
+        checkInAppointment,
         getAllDoctors,
         changeAvailability,
         appointments,

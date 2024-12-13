@@ -1,6 +1,7 @@
 import { createContext, useState } from "react";
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import timeSlotModel from "../../../backend/models/timeSlotModel";
 
 
 export const DoctorContext = createContext()
@@ -37,7 +38,9 @@ const DoctorContextProvider = (props) => {
         try {
 
             const { data } = await axios.get(backendUrl + '/api/doctor/profile', { headers: { dToken } })
-            setProfileData(data.profileData)
+            const docData = data.profileData
+            console.log(docData)
+            setProfileData(docData)
 
         } catch (error) {
             console.log(error)

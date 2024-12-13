@@ -21,7 +21,23 @@ const AppContextProvider = (props) => {
         console.log("calculating the age ",dob);
         const today = new Date()
         const birthDate = new Date(dob)
-        let age = today.getFullYear() - birthDate.getFullYear()
+        console.log("DOB",dob);
+        console.log("bdate",birthDate);
+        console.log("TOday",today);
+        // let age = today.getFullYear() - birthDate.getFullYear()
+        // return age
+        // Calculate age
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        const dayDifference = today.getDate() - birthDate.getDate();
+
+        if (
+            today.getMonth() < birthDate.getMonth() ||
+            (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())
+          ) {
+            age--;
+          }
+        console.log("Age",age);
         return age
     }
 

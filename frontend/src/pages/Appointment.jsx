@@ -24,72 +24,96 @@ const Appointment = () => {
     const navigate = useNavigate()
 
     const fetchDocInfo = async () => {
-        const docInfo = doctors.find((doc) => doc._id === docId)
+        const docInfo = await doctors.find((doc) => doc._id === docId)
         setDocInfo(docInfo)
     }
-
+   
     const getAvailableSolts = async () => {
-
-        setDocSlots([])
-
-        // getting current date
-        let today = new Date()
-
-        for (let i = 0; i < 7; i++) {
-
-            // getting date with index 
-            let currentDate = new Date(today)
-            currentDate.setDate(today.getDate() + i)
-
-            // setting end time of the date with index
-            let endTime = new Date()
-            endTime.setDate(today.getDate() + i)
-            endTime.setHours(21, 0, 0, 0)
-
-            // setting hours 
-            if (today.getDate() === currentDate.getDate()) {
-                currentDate.setHours(currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10)
-                currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0)
-            } else {
-                currentDate.setHours(10)
-                currentDate.setMinutes(0)
-            }
-
+        setDocSlots([]); // Reset slots
+    
+        if (!docInfo || !docInfo.timeSlotId || !docInfo.timeSlotId.availableDays) return;
+    
+        console.log("in slots func", docInfo);
+    
+        const today = new Date();
+        const availableDays = docInfo.timeSlotId.availableDays; // From doctor's profile
+        console.log("Available days", availableDays);
+    
+        // Calculate the date of the upcoming Sunday
+        const currentDayOfWeek = today.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+        const daysUntilSunday = 7 - currentDayOfWeek;
+        const endOfWeek = new Date(today);
+        endOfWeek.setDate(today.getDate() + daysUntilSunday);
+    
+        for (let i = 0; i <= daysUntilSunday; i++) {
+            const currentDate = new Date(today);
+            currentDate.setDate(today.getDate() + i);
+    
+            const dayOfWeek = currentDate.toLocaleString('en-US', { weekday: 'long' });
+            console.log("Day of week", dayOfWeek);
+    
+            // Check if the doctor is available on this day
+            const dayAvailability = availableDays.find((d) => d.day === dayOfWeek);
+            if (!dayAvailability) continue;
+    
+            const { startTime, endTime } = dayAvailability;
+    
+            // Convert start and end times to Date objects
+            const startDateTime = new Date(currentDate);
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            startDateTime.setHours(startHour, startMinute, 0, 0);
+    
+            const endDateTime = new Date(currentDate);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
+            endDateTime.setHours(endHour, endMinute, 0, 0);
+    
             let timeSlots = [];
-
-
-            while (currentDate < endTime) {
-                let formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                let day = currentDate.getDate()
-                let month = currentDate.getMonth()
-                let year = currentDate.getFullYear()
-
-                const slotDate = day + "_" + month + "_" + year 
-                const slotTime = formattedTime
-
-                const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false : true
-                // const isSlotAvailable = docInfo.slots_booked[slotDate]  ? false : true
-
-
-                if (isSlotAvailable) {
-
-                    // Add slot to array
-                    timeSlots.push({
-                        datetime: new Date(currentDate),
-                        time: formattedTime
-                    })
+            let currentTime = new Date(startDateTime);
+    
+            while (currentTime < endDateTime) {
+                if (currentTime > today) { // Ensure slot is in the future
+                    const formattedTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+                    const day = currentDate.getDate();
+                    const month = currentDate.getMonth();
+                    const year = currentDate.getFullYear();
+    
+                    const slotDate = `${day}_${month}_${year}`;
+                    const slotTime = formattedTime;
+    
+                    const isSlotAvailable =
+                        !docInfo.slots_booked[slotDate] ||
+                        !docInfo.slots_booked[slotDate].includes(slotTime);
+    
+                    if (isSlotAvailable) {
+                        timeSlots.push({
+                            datetime: new Date(currentTime),
+                            time: formattedTime,
+                        });
+                    }
                 }
-
-                // Increment current time by 30 minutes
-                currentDate.setMinutes(currentDate.getMinutes() + 30);
+    
+                // Increment time by 30 minutes
+                currentTime.setMinutes(currentTime.getMinutes() + 30);
             }
-            if (timeSlots.length > 0) setDocSlots(prev => ([...prev, timeSlots]))
 
+            // remove lunch time i.e 12 pm to 1 pm if present
+            timeSlots = timeSlots.filter((slot) => {
+                const slotHour = slot.datetime.getHours();
+                return slotHour !== 12;
+            });
+            
+    
+            if (timeSlots.length > 0) {
+                setDocSlots((prev) => [...prev, timeSlots]);
+            }
         }
-
-    }
-
+    };
+    
+    
+    
+    
+    
     const bookAppointment = async (bookingDetails) => {
         console.log("boking appointment called")
 
@@ -103,12 +127,12 @@ const Appointment = () => {
             return
         }
         var payment = null 
-        console.log("old patient Data/n and new booking details are ",patientData,bookingDetails);
         if(patientData.insuranceId!=bookingDetails.insuranceId || patientData.cardDetails!=bookingDetails.cardDetails){
                 const { data } = await axios.post(
                     backendUrl + "/api/user/create-payment",
                     { insuranceId: bookingDetails.insuranceId 
-                         , cardDetails: bookingDetails.cardDetails },
+                         , cardDetails: bookingDetails.cardDetails,
+                         providerName: bookingDetails.providerName},
                     { headers: { token } }
                   );
                   if (data.success) {
@@ -128,7 +152,8 @@ const Appointment = () => {
 
 
         let day = date.getDate()
-        let month = date.getMonth() 
+        let month = date.getMonth()
+        console.log("month",month)
         let year = date.getFullYear()
 
         const slotDate = day + "_" + month + "_" + year 
@@ -161,16 +186,21 @@ const Appointment = () => {
 
     useEffect(() => {
         if (doctors.length > 0) {
-            fetchDocInfo()
+            fetchDocInfo();
             setIsModalOpen(false);
         }
-    }, [doctors, docId])
-
+    }, [doctors, docId]);
+    
     useEffect(() => {
-        if (docInfo) {
-            getAvailableSolts()
+        // Only proceed if docInfo is truthy and has required data
+        if (docInfo && Object.keys(docInfo).length > 0) {
+            console.log("Fetching available slots for:", docInfo.firstname);
+            getAvailableSolts();
+        } else {
+            console.log("Waiting for docInfo...");
         }
-    }, [docInfo,docId])
+    }, [docInfo]);
+    
 
     
 
@@ -185,9 +215,9 @@ const Appointment = () => {
 
                 <div className='flex-1 border border-[#ADADAD] rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0'>
 
-                    {/* ----- Doc Info : name, degree, experience ----- */}
+                    {/* ----- Doc Info : firstname, degree, experience ----- */}
 
-                    <p className='flex items-center gap-2 text-3xl font-medium text-gray-700'>{docInfo.name} <img className='w-5' src={assets.verified_icon} alt="" /></p>
+                    <p className='flex items-center gap-2 text-3xl font-medium text-gray-700'>{docInfo.firstname} <img className='w-5' src={assets.verified_icon} alt="" /></p>
                     <div className='flex items-center gap-2 mt-1 text-gray-600'>
                         <p>{docInfo.degree} - {docInfo.speciality}</p>
                         <button className='py-0.5 px-2 border text-xs rounded-full'>{docInfo.experience}</button>

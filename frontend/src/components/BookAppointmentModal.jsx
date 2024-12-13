@@ -3,26 +3,44 @@ import { toast } from "react-toastify";
 
 const BookAppointmentModal = ({ patientData, onClose, onConfirm }) => {
     const [reason, setReason] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('');
-    const [insuranceId, setInsuranceId] = useState(patientData.insuranceId || null);
+    const [paymentMethod, setPaymentMethod] = useState(() => {
+        if (patientData.insuranceId && patientData.insuranceId !== 'null') {
+            return 'health-insurance';
+        } else {
+            return '';
+        }
+    });
+    const [insuranceId, setInsuranceId] = useState(() => {
+        if (patientData && patientData.insuranceId !== 'null') {
+            return patientData.insuranceId;
+        } else {
+            return null;
+        }
+    });
+    const [providerName, setProviderName] = useState(()=>{
+        if (patientData && patientData.providerName !== 'null') {
+            return patientData.providerName;
+        } else {
+            return null;
+        }
+    });
     const [cardDetails, setCardDetails] = useState(
         patientData.cardDetails || { number: null, expiryDate: null }
     );
 
     const handleConfirm = () => {
-        if (!reason || !paymentMethod) {
+        if (!paymentMethod) {
             toast("Please provide a reason and select a payment method.");
             return;
         }
 
-
         const bookingDetails = {
             reason,
             paymentMethod,
-            insuranceId: insuranceId,
-            cardDetails:  cardDetails ,
+            insuranceId,
+            providerName,
+            cardDetails,
         };
-
 
         onConfirm(bookingDetails);
 
@@ -30,6 +48,7 @@ const BookAppointmentModal = ({ patientData, onClose, onConfirm }) => {
         setReason('');
         setPaymentMethod('');
         setInsuranceId(patientData.insuranceId || '');
+        setProviderName('');
         setCardDetails(patientData.cardDetails || { number: '', expiryDate: '' });
         onClose();
     };
@@ -48,21 +67,23 @@ const BookAppointmentModal = ({ patientData, onClose, onConfirm }) => {
                     onChange={(e) => setReason(e.target.value)}
                 ></textarea>
 
-                <label className="block text-gray-700 mb-2">Payment Method:</label>
-                <select
-                    className="w-full p-2 border border-gray-300 rounded-md mb-4"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                >
-                    <option value="" disabled>
-                        Select Payment Method
-                    </option>
-                    <option value="health-insurance">Health Insurance</option>
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                </select>
+                <label className="block text-gray-700 mb-2">Payment Method</label>
+                {!insuranceId && (
+                    <select
+                        className="w-full p-2 border border-gray-300 rounded-md mb-4"
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                    >
+                        <option value="" disabled>
+                            Select Payment Method
+                        </option>
+                        <option value="health-insurance">Health Insurance</option>
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                    </select>
+                )}
 
-                {paymentMethod === "health-insurance" && (
+                {(paymentMethod === "health-insurance" || insuranceId) && (
                     <div>
                         <label className="block text-gray-700 mb-2">
                             {patientData.insuranceId ? "Update Insurance ID:" : "Enter Insurance ID:"}
@@ -73,6 +94,14 @@ const BookAppointmentModal = ({ patientData, onClose, onConfirm }) => {
                             placeholder="Insurance ID"
                             value={insuranceId}
                             onChange={(e) => setInsuranceId(e.target.value)}
+                        />
+                        <label className="block text-gray-700 mb-2">Provider Name:</label>
+                        <input
+                            type="text"
+                            className="w-full p-2 border border-gray-300 rounded-md mb-4"
+                            placeholder="Insurance Provider Name"
+                            value={providerName}
+                            onChange={(e) => setProviderName(e.target.value)}
                         />
                     </div>
                 )}

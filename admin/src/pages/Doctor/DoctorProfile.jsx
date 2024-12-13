@@ -9,16 +9,47 @@ const DoctorProfile = () => {
     const { dToken, profileData, setProfileData, getProfileData } = useContext(DoctorContext)
     const { currency, backendUrl } = useContext(AppContext)
     const [isEdit, setIsEdit] = useState(false)
+    const [availableDays, setAvailableDays] = useState(
+      Array.isArray(profileData?.timeSlotId?.availableDays)
+        ? profileData.timeSlotId.availableDays
+        : []
+    );
+    
+    const handleDaySelection = (day) => {
+      const updatedDays = availableDays.some((d) => d.day === day)
+        ? availableDays.filter((d) => d.day !== day)
+        : [...availableDays, { day, startTime: "", endTime: "" }];
+      setAvailableDays(updatedDays); // Directly update the array
+    };
+    
+    const updateDaySchedule = (day, field, value) => {
+      const updatedDays = availableDays.map((d) =>
+        d.day === day ? { ...d, [field]: value } : d
+      );
+      setAvailableDays(updatedDays); // Update the array
+    };
+    
+      const handleChange = (field, value) => {
+        setAvailableDays({ ...availableDays, [field]: value });
+      };
+
 
     const updateProfile = async () => {
+
+
 
         try {
 
             const updateData = {
+                city: profileData.city,
+                state: profileData.state,
+                zip: profileData.zip,
+                phone: profileData.phone,
                 address: profileData.address,
                 fees: profileData.fees,
                 about: profileData.about,
-                available: profileData.available
+                available: profileData.available,
+                availableDays: availableDays
             }
 
             const { data } = await axios.post(backendUrl + '/api/doctor/update-profile', updateData, { headers: { dToken } })
@@ -43,6 +74,7 @@ const DoctorProfile = () => {
     useEffect(() => {
         if (dToken) {
             getProfileData()
+            console.log(profileData)
         }
     }, [dToken])
 
@@ -57,7 +89,7 @@ const DoctorProfile = () => {
 
                     {/* ----- Doc Info : name, degree, experience ----- */}
 
-                    <p className='flex items-center gap-2 text-3xl font-medium text-gray-700'>{profileData.name}</p>
+                    <p className='flex items-center gap-2 text-3xl font-medium text-gray-700'>{`${profileData.firstname} ${profileData.lastname}`}</p>
                     <div className='flex items-center gap-2 mt-1 text-gray-600'>
                         <p>{profileData.degree} - {profileData.speciality}</p>
                         <button className='py-0.5 px-2 border text-xs rounded-full'>{profileData.experience}</button>
@@ -88,10 +120,84 @@ const DoctorProfile = () => {
                         </p>
                     </div>
 
-                    <div className='flex gap-1 pt-2'>
+                    {/* city,state,zip,phone */}
+                    <div className='flex gap-2 py-2'>
+                        <p>City:</p>
+                        <p>{isEdit ? <input type='text' onChange={(e) => setProfileData(prev => ({ ...prev, city:  e.target.value }))} value={profileData.city} /> : profileData.city}</p>
+                    </div>
+                    <div className='flex gap-2 py-2'>
+                        <p>State:</p>
+                        <p>{isEdit ? <input type='text' onChange={(e) => setProfileData(prev => ({ ...prev,  state: e.target.value }))} value={profileData.state} /> : profileData.state}</p>
+                    </div>
+                    <div className='flex gap-2 py-2'>
+                        <p>Zip:</p>
+                        <p>{isEdit ? <input type='text' onChange={(e) => setProfileData(prev => ({ ...prev,  zip: e.target.value  }))} value={profileData.zip} /> : profileData.zip}</p>
+                    </div>
+                    <div className='flex gap-2 py-2'>
+                        <p>Phone:</p>
+                        <p>{isEdit ? <input type='text' onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))} value={profileData.phone} /> : profileData.phone}</p>
+                    </div>
+
+
+
+
+                    {/* Available Days */}
+                    <div className="mt-6">
+          <p>Available Days</p>
+          {isEdit && 
+          <>
+          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
+            (day) => (
+              <div key={day}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={availableDays.some((d) => d.day === day)}
+                    onChange={() => handleDaySelection(day)}
+                  />
+                  {day}
+                </label>
+                {availableDays.some((d) => d.day === day) && (
+                  <div className="flex gap-2 ml-4">
+                    <input
+                      type="time"
+                      placeholder="Start Time"
+                      value={availableDays.find((d) => d.day === day).startTime}
+                      onChange={(e) =>
+                        updateDaySchedule(day, "startTime", e.target.value)
+                      }
+                    />
+                    <input
+                      type="time"
+                      placeholder="End Time"
+                      value={availableDays.find((d) => d.day === day).endTime}
+                      onChange={(e) =>
+                        updateDaySchedule(day, "endTime", e.target.value)
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          )}</>}
+
+          {!isEdit && (
+            <div>
+              {availableDays.map((day) => (
+                <div key={day.day}>
+                  <p>
+                    {day.day} : {day.startTime} - {day.endTime}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+                    {/* <div className='flex gap-1 pt-2'>
                         <input type="checkbox" onChange={() => isEdit && setProfileData(prev => ({ ...prev, available: !prev.available }))} checked={profileData.available} />
                         <label htmlFor="">Available</label>
-                    </div>
+                    </div> */}
 
                     {
                         isEdit

@@ -21,10 +21,10 @@ const razorpayInstance = new razorpay({
 const registerUser = async (req, res) => {
 
     try {
-        const { name, email, password } = req.body;
+        const { firstname,lastname=null,zip=null,state=null,phone=null, email, password } = req.body;
 
         // checking for all data to register user
-        if (!name || !email || !password) {
+        if (  !email || !password) {
             return res.json({ success: false, message: 'Missing Details' })
         }
 
@@ -43,13 +43,13 @@ const registerUser = async (req, res) => {
         }
 
         // hashing user password
-        // const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
-        // const hashedPassword = await bcrypt.hash(password, salt)
+        const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
+        const hashedPassword = await bcrypt.hash(password, salt)
 
         const patientData = {
-            name,
+            firstname,lastname,zip,state,phone,
             email,
-            password: password,
+            password: hashedPassword,
         }
 
         const newUser = new userModel(patientData)
@@ -76,8 +76,8 @@ const loginUser = async (req, res) => {
             return res.json({ success: false, message: "User does not exist" })
         }
 
-        // const isMatch = await bcrypt.compare(password, user.password)
-        const isMatch = password === user.password
+        const isMatch = await bcrypt.compare(password, user.password)
+        
 
         if (isMatch) {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
@@ -104,6 +104,7 @@ const getProfile = async (req, res) => {
             const paymentData = await paymentModel.findById(patientData.paymentId);
             patientData.cardDetails = paymentData.cardDetails ? paymentData.cardDetails : null;
             patientData.insuranceId = paymentData.insuranceId ? paymentData.insuranceId : null;
+            patientData.providerName = paymentData.providerName ? paymentData.providerName : null;
         }
 
         res.json({ success: true, patientData });
@@ -119,11 +120,11 @@ const updateProfile = async (req, res) => {
 
     try {
 
-        const { userId, name, phone, address, dob, gender,cardDetails,insuranceId } = req.body
+        const { userId, firstname,lastname,zip,state,city, phone, address, dob, gender,cardDetails,insuranceId } = req.body
         const imageFile = req.file
 
 
-        if (!name || !phone || !dob || !gender) {
+        if ( !phone || !dob || !gender) {
             return res.json({ success: false, message: "Data Missing" })
         }
 
@@ -155,13 +156,13 @@ const updateProfile = async (req, res) => {
         if(user.paymentId == null && (paymentDetails.cardDetails != null || paymentDetails.insuranceId != null)){
             const newPayment = new paymentModel(paymentDetails)
             const payment=await newPayment.save()
-            await userModel.findByIdAndUpdate(userId, { name, phone, address: JSON.parse(address), dob, gender, paymentId: payment._id })
+            await userModel.findByIdAndUpdate(userId, { firstname,lastname,zip,state,city,phone, address: JSON.parse(address), dob, gender, paymentId: payment._id })
         }
         else if(user.paymentId != null){
             console.log("in the else if")
             await paymentModel.findByIdAndUpdate(user.paymentId, { cardDetails, insuranceId })
         }
-        await userModel.findByIdAndUpdate(userId, { name, phone, address: JSON.parse(address), dob, gender })
+        await userModel.findByIdAndUpdate(userId, { firstname,lastname,zip,city,state,phone, address: JSON.parse(address), dob, gender })
 
         res.json({ success: true, message: 'Profile Updated' })
 
@@ -173,8 +174,8 @@ const updateProfile = async (req, res) => {
 
 const createPayment = async (req, res) => {
     try {
-        const { userId, cardDetails, insuranceId } = req.body;
-        const newPayment = new paymentModel({ cardDetails, insuranceId });
+        const { userId, cardDetails, insuranceId,providerName } = req.body;
+        const newPayment = new paymentModel({ cardDetails, insuranceId,providerName });
         const newpayment = await newPayment.save();
         await userModel.findByIdAndUpdate(userId, { paymentId: newpayment._id });
         res.json({ success: true,data:newPayment , message: 'Payment Details Added' });
@@ -239,9 +240,17 @@ const bookAppointment = async (req, res) => {
             slots_booked[slotDate] = []
             slots_booked[slotDate].push(slotTime)
         }
-
         const patientData = await userModel.findById(userId).select("-password")
-        
+
+        if(payment){
+        console.log(patientData.paymentId,payment.data)
+        if(patientData?.paymentId!=payment.data._id
+        ){
+            console.log("Patient payment updated")
+            patientData.paymentId=payment.data._id
+            await patientData.save()
+        }
+    }
 
         delete docData.slots_booked
 

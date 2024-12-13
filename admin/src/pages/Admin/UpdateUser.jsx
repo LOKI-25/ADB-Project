@@ -10,7 +10,7 @@ const UpdateUser = () => {
   const { patientData } = location.state || {}; // Extract the passed user data from state
   const [profileData, setProfileData] = useState(patientData);
   const { backendUrl } = useContext(AppContext);
-  const [atoken] = useState(localStorage.getItem("aToken") || "");
+  const [atoken] = useState(localStorage.getItem("atoken") || "");
   const navigate = useNavigate();
 
   const updateProfile = async () => {
@@ -18,8 +18,12 @@ const UpdateUser = () => {
       console.log(profileData);
       const updateData = {
         userId: profileData._id,
-        name: profileData.name,
+        firstname: profileData.firstname,
         phone: profileData.phone,
+        lastname: profileData.lastname,
+        city: profileData.city,
+        state: profileData.state,
+        zip: profileData.zip,
         address: profileData.address,
         dob: profileData.dob,
         gender: profileData.gender,
@@ -75,13 +79,25 @@ const UpdateUser = () => {
         </div>
 
         <div className="flex-1 border border-stone-100 rounded-lg p-8 py-7 bg-white">
+        <p className="text-sm font-medium text-[#262626]">First Name:</p>
+
           <input
             type="text"
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Name"
-            value={profileData.name}
+            value={profileData.firstname}
             onChange={(e) =>
-              setProfileData({ ...profileData, name: e.target.value })
+              setProfileData({ ...profileData, firstname: e.target.value })
+            }
+          />
+          <p className="text-sm font-medium text-[#262626]">Last Name:</p>
+          <input
+            type="text"
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Name"
+            value={profileData.lastname}
+            onChange={(e) =>
+              setProfileData({ ...profileData, lastname: e.target.value })
             }
           />
           <div className="mt-3">
@@ -134,6 +150,77 @@ const UpdateUser = () => {
                 }
               />
             </div>
+
+            {/* city,state,zip,phone */}
+            <div className="mt-3">
+              <p className="text-sm font-medium text-[#262626]">City:</p>
+              <input
+                type="text"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+                value={profileData.city}
+                onChange={(e) =>
+                  setProfileData((prevProfileData) => ({
+                    ...prevProfileData,
+                    city: e.target.value,
+                    
+                  }))
+                }
+              />
+            </div>
+            <div className="mt-3">
+              <p>State:</p>
+              <input
+                type="text"
+                className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={profileData.state}
+                onChange={(e) =>
+                  
+                  setProfileData((prevProfileData) => ({
+                    ...prevProfileData,
+                    state: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="mt-3">
+              <p>Zip:</p>
+                
+              <input
+                type="text"
+                className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={profileData.zip}
+                onChange={(e) =>
+                  
+                  setProfileData((prevProfileData) => ({
+                    ...prevProfileData,
+                    zip: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="mt-3">
+              <p>Phone:</p>
+              <input
+                type="text"
+                className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={profileData.phone}
+                onChange={(e) =>
+                  
+                  setProfileData((prevProfileData) => ({
+                    ...prevProfileData,
+                    phone: e.target.value,
+                  }))
+                }
+              />
+            </div>
+        
+
+
+
+
             {/* card details */}
             <div className="mt-2 rounded-md">
               <div className="mb-4">

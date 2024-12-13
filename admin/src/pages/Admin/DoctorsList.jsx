@@ -22,12 +22,12 @@ const DoctorsList = () => {
           <div onClick={() => navigate(`/doctor-profile/${item._id}`)} className='border border-[#C9D8FF] rounded-xl max-w-56 overflow-hidden cursor-pointer group' key={index}>
             <img className='bg-[#EAEFFF] group-hover:bg-primary transition-all duration-500' src={item.image} alt="" />
             <div className='p-4'>
-              <p className='text-[#262626] text-lg font-medium'>{item.name}</p>
+              <p className='text-[#262626] text-lg font-medium'>{`${item.firstname} ${item.lastname}`}</p>
               <p className='text-[#5C5C5C] text-sm'>{item.speciality}</p>
-              <div className='mt-2 flex items-center gap-1 text-sm'>
+              {/* <div className='mt-2 flex items-center gap-1 text-sm'>
                 <input  type="checkbox" checked={item.available} readOnly/>
                 <p>Available</p>
-              </div>
+              </div> */}
             </div>
           </div>
         ))}

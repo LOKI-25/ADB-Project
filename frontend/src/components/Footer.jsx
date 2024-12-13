@@ -31,10 +31,10 @@ const Footer = () => {
 
       </div>
 
-      <div>
+      {/* <div>
         <hr />
         <p className='py-5 text-sm text-center'>Copyright 2024 @ Qapp.com - All Right Reserved.</p>
-      </div>
+      </div> */}
 
     </div>
   )

@@ -5,13 +5,13 @@ import adminModel from "../models/adminModel.js"
 const authAdmin = async (req, res, next) => {
     try {
         const { atoken } = req.headers
-        console.log(req.headers)
         if (!atoken) {
-            return res.json({ success: false, message: 'Not Authorized Login Again' })
+            return res.json({ success: false, message: 'Not Authorized Login Again!!' })
         }
         const token_decode = jwt.verify(atoken, process.env.JWT_SECRET)
+
         const admin = await adminModel.find({email:token_decode['email'],password:token_decode["password"]})
-            console.log(admin,token_decode)
+
         if( !admin ){
             return res.json({ success: false, message: 'Not Authorized Login Again' })
         }

@@ -13,6 +13,13 @@ const AppointmentDetails = () => {
 
   // Find the appointment based on ID
   const appointment = appointments.find((item) => item._id === id);
+  const formatNote = (note) => {
+    if (!note) return [];
+    return note.split('\n').map((line) => line.trim()).filter(Boolean); // Split by line, trim extra spaces, and remove empty lines
+  };
+
+  const formattedNote = formatNote(appointment.note);
+  
 
   const [pharmacyStore, setPharmacyStore] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -54,6 +61,7 @@ const AppointmentDetails = () => {
         if (appointment?.prescriptionId) {
             getPrescription(appointment?.prescriptionId);
         }
+
     }, [appointment]);
 
 
@@ -97,10 +105,16 @@ const AppointmentDetails = () => {
       <h2 className="text-xl font-medium mb-4">Appointment Details</h2>
 
       <div className="bg-white p-4 rounded shadow mb-4">
-        <p><strong>Patient Name:</strong> {appointment.patientData.name}</p>
+        <p><strong>Patient Name:</strong> {appointment.patientData.firstname}</p>
         <p><strong>Age:</strong> {calculateAge(appointment.patientData.dob)}</p>
         <p><strong>Date & Time:</strong> {slotDateFormat(appointment.slotDate)}, {appointment.slotTime}</p>
         <p><strong>Fees:</strong> {appointment.amount}</p>
+      <h3 className="text-lg font-medium mb-2">Operator Note:</h3>
+      <ul className="list-disc pl-5">
+        {formattedNote.map((line, index) => (
+          <li className='' key={index}>{line}</li>
+        ))}
+      </ul>
       </div>
 
       <form onSubmit={onSubmitHandler} className="bg-white p-4 rounded shadow">

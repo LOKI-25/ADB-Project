@@ -25,6 +25,7 @@ const MyAppointments = () => {
       const { data } = await axios.get(backendUrl + "/api/user/appointments", {
         headers: { token },
       });
+      console.log("Appointments", data);
       setAppointments(data.appointments.reverse());
     } catch (error) {
       console.log(error);
@@ -87,13 +88,16 @@ const MyAppointments = () => {
               <img className="w-36 bg-[#EAEFFF]" src={item.docData.image} alt="" />
             </div>
             <div className="flex-1 text-sm text-[#5E5E5E]">
-              <p className="text-[#262626] text-base font-semibold">{item.docData.name}</p>
+              <p className="text-[#262626] text-base font-semibold">{item.docData.firstname}</p>
               <p>{item.docData.speciality}</p>
               <p className="text-[#464646] font-medium mt-1">Address:</p>
               <p>{item.docData.address.line1}</p>
               <p>{item.docData.address.line2}</p>
               <p className="mt-1">
                 <span className="text-sm text-[#3C3C3C] font-medium">Payment Method:</span> {item.paymentMethod}
+              </p>
+              <p className="mt-1">
+                <span className="text-sm text-[#3C3C3C] font-medium">Provider Name:</span> {item.paymentMethod === "health-insurance" ? item.payment?.data?.providerName : "N/A"}
               </p>
               <p className="mt-1">
                 <span className="text-sm text-[#3C3C3C] font-medium">Date & Time:</span> {slotDateFormat(item.slotDate)} |{" "}
